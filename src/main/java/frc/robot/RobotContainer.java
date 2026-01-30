@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.util.NetworkTablesUtil;
 
 public class RobotContainer {
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -58,9 +59,22 @@ public class RobotContainer {
                 System.out.println("leftY speed:" + (-Math.pow(joystick.getLeftY(), 3) * MaxSpeed));
                 System.out.println("leftX speed:" + (-Math.pow(joystick.getLeftX(), 3) * MaxSpeed));
                 System.out.println("rightX: " + joystick.getRightX());
-                return drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+                System.out.println("Vedanth's limelight testing");
+                System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[0] + " " + 
+                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[1] + " " + 
+                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[2]);
+                System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[0] + " " + 
+                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[1] + " " + 
+                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[2]);
+                System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[0] + " " + 
+                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[1] + " " + 
+                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[2]);
+                // return drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                //     .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+                //     .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+                return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward)
+                    .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left)
+                    .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
             })
         );
 
