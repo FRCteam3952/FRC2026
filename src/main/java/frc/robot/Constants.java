@@ -7,4 +7,8 @@ public class Constants {
         public static int TURRET_LOWER_INTAKE_PORT = 0;
         public static int TURRET_UPPER_INTAKE_PORT = 0;
     }
+
+    public static class NetworkTablesConstants {
+		public static final String MAIN_TABLE_NAME = "robot";
+	}
 }
