@@ -47,11 +47,15 @@ public class TurretSubsystem implements Subsystem {
     }
 
     public void startRotatorMotorRight() {
-        rotatorMotor.set(0.1);
+        if (limitSwitch.getChannel() == 1) {
+            rotatorMotor.set(0.1);
+        }
     }
 
     public void startRotatorMotorLeft() {
-        rotatorMotor.set(-0.1);
+        if (limitSwitch.getChannel() == 1) {
+            rotatorMotor.set(-0.1);
+        } 
     }
 
     public void stopRotatorMotor() {
@@ -88,6 +92,7 @@ public class TurretSubsystem implements Subsystem {
     public void periodic() {
         if (limitSwitch.get()) { // Check to see if the limit switch has been triggered
             rotationsSmallGear = 0;
+            rotatorMotor.stopMotor();
         }
         if (AbsoluteEncoderPos > 0.9 && rotatorMotorAbsoluteEncoder.getPosition() < 0.2) {
             rotationsSmallGear++;
