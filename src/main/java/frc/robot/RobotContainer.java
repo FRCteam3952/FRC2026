@@ -58,20 +58,20 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() -> {
-                System.out.println("Deni's print output: Recieving joystick output.");
-                System.out.println("leftY speed:" + (-Math.pow(joystick.getLeftY(), 3) * MaxSpeed));
-                System.out.println("leftX speed:" + (-Math.pow(joystick.getLeftX(), 3) * MaxSpeed));
-                System.out.println("rightX: " + joystick.getRightX());
-                System.out.println("Vedanth's limelight testing");
-                System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[0] + " " + 
-                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[1] + " " + 
-                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[2]);
-                System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[0] + " " + 
-                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[1] + " " + 
-                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[2]);
-                System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[0] + " " + 
-                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[1] + " " + 
-                    frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[2]);
+                // System.out.println("Deni's print output: Recieving joystick output.");
+                // System.out.println("leftY speed:" + (-Math.pow(joystick.getLeftY(), 3) * MaxSpeed));
+                // System.out.println("leftX speed:" + (-Math.pow(joystick.getLeftX(), 3) * MaxSpeed));
+                // System.out.println("rightX: " + joystick.getRightX());
+                // System.out.println("Vedanth's limelight testing");
+                // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[0] + " " + 
+                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[1] + " " + 
+                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[2]);
+                // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[0] + " " + 
+                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[1] + " " + 
+                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[2]);
+                // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[0] + " " + 
+                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[1] + " " + 
+                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[2]);
                 // return drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
                 //     .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
                 //     .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
@@ -87,7 +87,11 @@ public class RobotContainer {
         joystick.R1().onTrue(new InstantCommand(deniTurret::startFiring));
         joystick.R1().onFalse(new InstantCommand(deniTurret::stopFiring));
 
-
+        joystick.povRight().onTrue(new InstantCommand(deniTurret::startRotatorMotorRight));
+        joystick.povLeft().onTrue(new InstantCommand(deniTurret::startRotatorMotorLeft));
+        
+        joystick.povRight().onFalse(new InstantCommand(deniTurret::stopRotatorMotor));
+        joystick.povLeft().onFalse(new InstantCommand(deniTurret::stopRotatorMotor));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
