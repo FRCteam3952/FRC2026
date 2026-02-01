@@ -37,6 +37,8 @@ public class RobotContainer {
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
+    private Command teleopDriveCommmand;
+    private Command followApriltagCommand;
     
 
     // private final CommandXboxController joystick = new CommandXboxController(0);
@@ -50,36 +52,55 @@ public class RobotContainer {
         configureBindings();
     }
 
-
-
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
-        drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
-            drivetrain.applyRequest(() -> {
-                // System.out.println("Deni's print output: Recieving joystick output.");
-                // System.out.println("leftY speed:" + (-Math.pow(joystick.getLeftY(), 3) * MaxSpeed));
-                // System.out.println("leftX speed:" + (-Math.pow(joystick.getLeftX(), 3) * MaxSpeed));
-                // System.out.println("rightX: " + joystick.getRightX());
-                // System.out.println("Vedanth's limelight testing");
-                // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[0] + " " + 
-                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[1] + " " + 
-                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[2]);
-                // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[0] + " " + 
-                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[1] + " " + 
-                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[2]);
-                // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[0] + " " + 
-                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[1] + " " + 
-                //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[2]);
-                // return drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                //     .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                //     .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-                return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left)
+        
+        teleopDriveCommmand = drivetrain.applyRequest(() -> {
+            // System.out.println("Deni's print output: Recieving joystick output.");
+            // System.out.println("leftY speed:" + (-Math.pow(joystick.getLeftY(), 3) * MaxSpeed));
+            // System.out.println("leftX speed:" + (-Math.pow(joystick.getLeftX(), 3) * MaxSpeed));
+            // System.out.println("rightX: " + joystick.getRightX());
+            // System.out.println("Vedanth's limelight testing");
+            // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[0] + " " + 
+            //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[1] + " " + 
+            //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryA()[2]);
+            // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[0] + " " + 
+            //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[1] + " " + 
+            //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryB()[2]);
+            // System.out.println(frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[0] + " " + 
+            //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[1] + " " + 
+            //     frc.robot.util.NetworkTablesUtil.getAprilTagEntryC()[2]);
+            // return drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+            //     .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+            //     .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+
+            System.out.println("Apriltag Entry A: " + NetworkTablesUtil.getAprilTagEntry('a'));
+            System.out.println("Apriltag Entry B: " + NetworkTablesUtil.getAprilTagEntry('b'));
+            System.out.println("Apriltag Entry C: " + NetworkTablesUtil.getAprilTagEntry('c'));
+
+            return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
+                .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
+                .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+        });
+
+        followApriltagCommand = drivetrain.applyRequest(() -> {
+            if (NetworkTablesUtil.getAnyAprilTagEntry().isEmpty()) {
+                System.out.println("no bot pose :(");
+
+                return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
+                    .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
                     .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-            })
-        );
+            }
+
+            double[] botPose = NetworkTablesUtil.getAnyAprilTagEntry().get();
+
+            System.out.println("bot pose: " + botPose);
+
+            return null;
+        });
+
+        drivetrain.setDefaultCommand(teleopDriveCommmand);
 
         joystick.R2().onTrue(new InstantCommand(deniTurret::startLoadFuel));
         joystick.R2().onFalse(new InstantCommand(deniTurret::stopLoadFuel));
