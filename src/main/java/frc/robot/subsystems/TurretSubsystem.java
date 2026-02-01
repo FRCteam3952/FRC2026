@@ -76,7 +76,9 @@ public class TurretSubsystem implements Subsystem {
     }
 
     public void startRotatorMotorLeft() {
-        rotatorMotor.set(-0.1);
+        if (limitSwitch.getChannel() == 1) {
+            rotatorMotor.set(-0.1);
+        } 
     }
 
     public void stopRotatorMotor() {
