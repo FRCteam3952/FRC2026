@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.util.ControlUtils;
 import frc.robot.util.NetworkTablesUtil;
 import frc.robot.subsystems.TurretSubsystem;
 
@@ -95,12 +96,33 @@ public class RobotContainer {
 
             double[] botPose = NetworkTablesUtil.getAnyAprilTagEntry().get();
 
-            System.out.println("bot pose: " + botPose);
+            double currentX = botPose[0]; // probably correct
+            double currentY = botPose[1];
+            System.out.println("currentX: " + currentX);
+            System.out.println("currentY: " + currentY);
 
-            return null;
+            double expectedX = 0.0;
+            double expectedY = 0.0;
+
+            double kP = 0.5;
+            double maxSpeed = 0.4;
+
+            double xSpeed = ControlUtils.clamp((expectedX - currentX) * kP) * maxSpeed;
+            double ySpeed = ControlUtils.clamp((expectedY - currentY) * kP) * maxSpeed;
+            System.out.println("xSpeed: " + xSpeed);
+            System.out.println("ySpeed: " + ySpeed);
+
+            // Don't move for now
+            return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
+                .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
+                .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+
+            // return drive.withVelocityX(xSpeed * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+            //     .withVelocityY(ySpeed * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+            //     .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
         });
 
-        drivetrain.setDefaultCommand(teleopDriveCommmand);
+        drivetrain.setDefaultCommand(followApriltagCommand);
 
         joystick.R2().onTrue(new InstantCommand(deniTurret::startLoadFuel));
         joystick.R2().onFalse(new InstantCommand(deniTurret::stopLoadFuel));

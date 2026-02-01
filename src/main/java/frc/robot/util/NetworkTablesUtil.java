@@ -1,16 +1,27 @@
 package frc.robot.util;
 
-import edu.wpi.first.networktables.*;
-import frc.robot.Constants.NetworkTablesConstants;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
+import edu.wpi.first.networktables.ConnectionInfo;
+import edu.wpi.first.networktables.GenericPublisher;
+import edu.wpi.first.networktables.GenericSubscriber;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableType;
+import edu.wpi.first.networktables.NetworkTablesJNI;
+import edu.wpi.first.networktables.PubSubOption;
+import edu.wpi.first.networktables.TimestampedDoubleArray;
+import frc.robot.Constants.NetworkTablesConstants;
 
 public final class NetworkTablesUtil {
     private static final NetworkTableInstance INSTANCE = NetworkTableInstance.getDefault();
     public static final NetworkTable MAIN_ROBOT_TABLE = INSTANCE.getTable(NetworkTablesConstants.MAIN_TABLE_NAME);
     private static final Map<String, GenericPublisher> publishers = new HashMap<>();
     private static final Map<String, GenericSubscriber> subscribers = new HashMap<>();
+    private static final double[] DEFAULT_BOTPOSE = new double[] {77.0};
 
     /**
      * Gets the NetworkTablesConstants Instance being used by the program
@@ -31,16 +42,20 @@ public final class NetworkTablesUtil {
         return INSTANCE.getTable(tableName);
     }
     
-    public static double[] getAprilTagEntryA() {
-        return INSTANCE.getTable("limelight-a").getEntry("botpose").getDoubleArray(new double[]{0.0});
+    public static Optional<double[]> getAprilTagEntry(char which) {
+        double[] botPose = INSTANCE.getTable("limelight-" + which).getEntry("botpose").getDoubleArray(DEFAULT_BOTPOSE);
+        if (botPose == DEFAULT_BOTPOSE) {
+            return Optional.empty();
+        } else {
+            return Optional.of(botPose);
+        }
     }
 
-    public static double[] getAprilTagEntryB() {
-        return INSTANCE.getTable("limelight-b").getEntry("botpose").getDoubleArray(new double[]{0.0});
-    }
-    
-    public static double[] getAprilTagEntryC() {
-        return INSTANCE.getTable("limelight-c").getEntry("botpose").getDoubleArray(new double[]{0.0});
+    // TODO: replace with intelligent averaging or something.
+    public static Optional<double[]> getAnyAprilTagEntry() {
+        return getAprilTagEntry('a')
+            .or(() -> getAprilTagEntry('b'))
+            .or(() -> getAprilTagEntry('c'));
     }
     
     /**
