@@ -44,7 +44,7 @@ public final class NetworkTablesUtil {
     
     public static Optional<double[]> getAprilTagEntry(char which) {
         double[] botPose = INSTANCE.getTable("limelight-" + which).getEntry("botpose").getDoubleArray(DEFAULT_BOTPOSE);
-        if (botPose == DEFAULT_BOTPOSE) {
+        if (botPose.length == 1 && botPose[0] == DEFAULT_BOTPOSE[0]) {
             return Optional.empty();
         } else {
             return Optional.of(botPose);

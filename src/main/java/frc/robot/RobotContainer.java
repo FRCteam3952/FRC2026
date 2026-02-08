@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Optional;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -21,9 +23,10 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.IntakeSubsystem;
+//import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.util.ControlUtils;
 import frc.robot.util.NetworkTablesUtil;
-import frc.robot.subsystems.TurretSubsystem;
 
 public class RobotContainer {
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -46,8 +49,9 @@ public class RobotContainer {
     private final CommandPS5Controller joystick = new CommandPS5Controller(0);
     
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+    public final IntakeSubsystem PratheekIntake = new IntakeSubsystem();
     
-    public final TurretSubsystem deniTurret = new TurretSubsystem();
+    // public final TurretSubsystem deniTurret = new TurretSubsystem();
 
     public RobotContainer() {
         configureBindings();
@@ -76,65 +80,101 @@ public class RobotContainer {
             //     .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
             //     .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
 
-            System.out.println("Apriltag Entry A: " + NetworkTablesUtil.getAprilTagEntry('a'));
-            System.out.println("Apriltag Entry B: " + NetworkTablesUtil.getAprilTagEntry('b'));
-            System.out.println("Apriltag Entry C: " + NetworkTablesUtil.getAprilTagEntry('c'));
+            // System.out.println("Apriltag Entry A: " + NetworkTablesUtil.getAprilTagEntry('a'));
+            // System.out.println("Apriltag Entry B: " + NetworkTablesUtil.getAprilTagEntry('b'));
+            // System.out.println("Apriltag Entry C: " + NetworkTablesUtil.getAprilTagEntry('c'));
 
-            return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
-                .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
-                .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+            return drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+                .withRotationalRate(-joystick.getRightX()*MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
         });
-
+    
         followApriltagCommand = drivetrain.applyRequest(() -> {
-            if (NetworkTablesUtil.getAnyAprilTagEntry().isEmpty()) {
+            Optional<double[]> optionalBotPose = NetworkTablesUtil.getAprilTagEntry('b');
+
+            if (optionalBotPose.isEmpty()) {
                 System.out.println("no bot pose :(");
 
-                return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
-                    .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
-                    .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+                return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
+                    .withVelocityY(0) // Drive left with negative X (left) (MaxSpeed)
+                    .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
             }
 
-            double[] botPose = NetworkTablesUtil.getAnyAprilTagEntry().get();
+            double[] botPose = optionalBotPose.get();
 
             double currentX = botPose[0]; // probably correct
             double currentY = botPose[1];
-            System.out.println("currentX: " + currentX);
-            System.out.println("currentY: " + currentY);
+            double currentYaw = botPose[5];
+            System.out.println("currentX: " + currentX + " & expectedX = " + drivetrain.getExpectedX()+"\n"
+            +"currentY: " + currentY + " & expectedY = " + drivetrain.getExpectedY()+"\n"
+            +"currentYaw: " + currentYaw + " & expectedYaw = " + 0);
 
-            double expectedX = 0.0;
-            double expectedY = 0.0;
+            // For some reason we keep getting (0, 0) when the limelight doesn't detect the apriltag, even though that's not supposed to be the default.
+            // This code is here to fix that.
+            if (currentX == 0 && currentY == 0) {
+                return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
+                    .withVelocityY(0) // Drive left with negative X (left) (MaxSpeed)
+                    .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+            }
 
-            double kP = 0.5;
-            double maxSpeed = 0.4;
+            double expectedX = drivetrain.getExpectedX();
+            double expectedY = drivetrain.getExpectedY();
+            double expectedYaw = 0;
 
+            double kP = 3.0;
+            double maxSpeed = 0.1;
+
+            double kPYaw = 0.4;
+            double maxRotationalSpeed = 0.1;
+
+            // I don't know why I had to negate these values for it to work.
+            // I tried so hard to understand, but I guess we just have to insert negatives here
+            // and we will never know why. I have so much missing homework.
             double xSpeed = ControlUtils.clamp((expectedX - currentX) * kP) * maxSpeed;
             double ySpeed = ControlUtils.clamp((expectedY - currentY) * kP) * maxSpeed;
-            System.out.println("xSpeed: " + xSpeed);
-            System.out.println("ySpeed: " + ySpeed);
+
+            double yawSpeed = -ControlUtils.clamp((expectedYaw - currentYaw) * kPYaw) * maxRotationalSpeed;
+
+
+            System.out.println("xSpeed: " + xSpeed
+            +"ySpeed: " + ySpeed
+            +"yawSpeed " + yawSpeed);
+
+            // reverse if a button is pressed
+            if (joystick.triangle().getAsBoolean()) {
+                // System.out.println("Inverting the outputs!");
+                xSpeed = -xSpeed;
+                ySpeed = -ySpeed;
+            }
 
             // Don't move for now
-            return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
-                .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
-                .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+            // return drive.withVelocityX(-joystick.getLeftY() * 0) // Drive forward with negative Y (forward) (MaxSpeed)
+            //     .withVelocityY(-joystick.getLeftX() * 0) // Drive left with negative X (left) (MaxSpeed)
+            //     .withRotationalRate(-joystick.getRightX()*0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
 
-            // return drive.withVelocityX(xSpeed * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-            //     .withVelocityY(ySpeed * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
-            //     .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+            // System.out.println("Driving at those speeds!");
+            return drive.withVelocityX(xSpeed * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                .withVelocityY(ySpeed * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+                .withRotationalRate(yawSpeed * MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
         });
-
         drivetrain.setDefaultCommand(followApriltagCommand);
 
-        joystick.R2().onTrue(new InstantCommand(deniTurret::startLoadFuel));
-        joystick.R2().onFalse(new InstantCommand(deniTurret::stopLoadFuel));
-
-        joystick.R1().onTrue(new InstantCommand(deniTurret::startFiring));
-        joystick.R1().onFalse(new InstantCommand(deniTurret::stopFiring));
-
-        joystick.povRight().onTrue(new InstantCommand(deniTurret::startRotatorMotorRight));
-        joystick.povLeft().onTrue(new InstantCommand(deniTurret::startRotatorMotorLeft));
+        // joystick.R2().onTrue(new InstantCommand(PratheekIntake::startLoadFuel));
+        // joystick.R2().onFalse(new InstantCommand(PratheekIntake::stopLoadFuel));
         
-        joystick.povRight().onFalse(new InstantCommand(deniTurret::stopRotatorMotor));
-        joystick.povLeft().onFalse(new InstantCommand(deniTurret::stopRotatorMotor));
+        joystick.R2().whileTrue(teleopDriveCommmand);
+
+        joystick.L1().onTrue(new InstantCommand(() -> {
+            drivetrain.setExpectedX(7.3968);
+            drivetrain.setExpectedY(0);
+        }));
+
+        joystick.L2().onTrue(new InstantCommand(() -> {
+            drivetrain.setExpectedX(7.004);
+            drivetrain.setExpectedY(0);
+        }));
+
+
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.

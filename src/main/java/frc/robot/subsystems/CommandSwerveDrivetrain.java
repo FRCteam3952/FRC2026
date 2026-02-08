@@ -34,6 +34,9 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
  * https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/tuner-swerve/index.html
  */
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+    private double expectedX = 7.3968;
+    private double expectedY = 0;
+
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
@@ -218,6 +221,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return m_sysIdRoutineToApply.dynamic(direction);
+    }
+
+    public double getExpectedX() {
+        return this.expectedX;
+    }
+
+    public double getExpectedY() {
+        return this.expectedY;
+    }
+
+    public void setExpectedX(double newX) {
+        this.expectedX = newX;
+    }
+
+    public void setExpectedY(double newY) {
+        this.expectedY = newY;
     }
 
     @Override
