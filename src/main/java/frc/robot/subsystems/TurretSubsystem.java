@@ -76,7 +76,7 @@
 //     }
 
 //     public void startRotatorMotorLeft() {
-//         if (limitSwitch.getChannel() == 1) {
+//         if (limitSwitch.get() == false) {
 //             rotatorMotor.set(-0.1);
 //         } 
 //     }
@@ -141,7 +141,8 @@
 //             rotationsSmallGear--;
 //         }
 
-//         previousLimitSwitchValue = limitSwitch.get();
+//         // Update the previous values
+    //    previousLimitSwitchValue = limitSwitch.get();
 //         previousRotatorPosition = rotatorMotorEncoder.getPosition();
 
 //         if (rotatorInitialized) {
