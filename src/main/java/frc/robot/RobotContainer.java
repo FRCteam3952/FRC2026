@@ -122,29 +122,37 @@ public class RobotContainer {
 
             // double expectedX = drivetrain.getExpectedX();
             // double expectedY = drivetrain.getExpectedY();
-            double expectedYaw = 0;
-
 
             double maxSpeed = 0.1;
 
             double kPYaw = 0.4;
             double maxRotationalSpeed = 0.2;
 
+            double towerX = 12.00; // this is made up and not a real number at all.
+            double towerY = 4.00;
 
-            // TODO: make this code normal again.
-            double xSpeed = -Math.pow(ControlUtils.clamp(drivetrain.getXSpeed(botPose.getX())), 1) * maxSpeed;
-            double ySpeed = -Math.pow(ControlUtils.clamp(drivetrain.getYSpeed(botPose.getY())), 1) * maxSpeed;
+            // Auto-target the tower code
+            double xDifference = towerX - botPose.getX();
+            double yDifference = towerY - botPose.getY();
+            double expectedYaw = -Math.atan(xDifference / yDifference); // clockwise is positive
+            if (xDifference < 0) {
+                expectedYaw = 90 - expectedYaw;
+            }
 
+
+            double xSpeed = -ControlUtils.clamp(drivetrain.getXSpeed(botPose.getX())) * maxSpeed;
+            double ySpeed = -ControlUtils.clamp(drivetrain.getYSpeed(botPose.getY())) * maxSpeed;
             double yawSpeed = ControlUtils.clamp((expectedYaw - botPose.getRotation().getRadians()) * kPYaw) * maxRotationalSpeed;
 
+            
             drivetrain.setSetpoint(14.79, 4.00);
 
             double expectedX = drivetrain.getXSetpoint();
             double expectedY = drivetrain.getYSetpoint();
-            // System.out.println("\nxSpeed: " + xSpeed
-            // +"\nySpeed: " + ySpeed
-            // +"\nyawSpeed " + yawSpeed + "\ncurrentX = " + botPose.getX() + " | expectedX = " + expectedX
-            // + "\ncurrentY = " + botPose.getY() + " | expectedY" + expectedY);
+            System.out.println("\nxSpeed: " + xSpeed
+            +"\nySpeed: " + ySpeed
+            +"\nyawSpeed " + yawSpeed + "\ncurrentX = " + botPose.getX() + " | expectedX = " + expectedX
+            + "\ncurrentY = " + botPose.getY() + " | expectedY" + expectedY);
 
             // reverse if a button is pressed
             if (joystick.triangle().getAsBoolean()) {
@@ -172,7 +180,7 @@ public class RobotContainer {
                 .withDeadband(0.1);
             });
 
-        drivetrain.setDefaultCommand(teleopDriveCommmand);
+        drivetrain.setDefaultCommand(followApriltagCommand);
 
         // joystick.R2().onTrue(new InstantCommand(PratheekIntake::startLoadFuel));
         // joystick.R2().onFalse(new InstantCommand(PratheekIntake::stopLoadFuel));
