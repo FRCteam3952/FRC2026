@@ -144,7 +144,7 @@ public class RobotContainer {
             double ySpeed = -ControlUtils.clamp(drivetrain.getYSpeed(botPose.getY())) * maxSpeed;
             double yawSpeed = ControlUtils.clamp((expectedYaw - botPose.getRotation().getRadians()) * kPYaw) * maxRotationalSpeed;
 
-            
+
             drivetrain.setSetpoint(14.79, 4.00);
 
             double expectedX = drivetrain.getXSetpoint();
@@ -180,7 +180,7 @@ public class RobotContainer {
                 .withDeadband(0.1);
             });
 
-        drivetrain.setDefaultCommand(followApriltagCommand);
+        drivetrain.setDefaultCommand(teleopDriveCommmand);
 
         // joystick.R2().onTrue(new InstantCommand(PratheekIntake::startLoadFuel));
         // joystick.R2().onFalse(new InstantCommand(PratheekIntake::stopLoadFuel));
@@ -194,6 +194,19 @@ public class RobotContainer {
                     shooter.startLoadFuel(); 
                 }
             })));
+        
+        // Need to set setpoints
+        // GUIDE TO MAKING THE ROBOT SHOOTER SETPOINT-CONTROLLED INSTEAD OF INCREMENTAL
+        // 1. change these commands (optional)
+        // 2. change the periodic method of the shooter to call the PID thing command (commented out Rn)
+        // joystick.povUp().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(1.0)));
+        // joystick.povDown().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(0.0)));
+        
+        joystick.povUp().onTrue(new InstantCommand(() -> shooter.riseFuelHood()));
+        joystick.povDown().onTrue(new InstantCommand(() -> shooter.lowerFuelHood()));
+        joystick.povUp().onFalse(new InstantCommand(() -> shooter.stopFuelHood()));
+        joystick.povDown().onFalse(new InstantCommand(() -> shooter.stopFuelHood()));
+
         joystick.L2().onFalse(new InstantCommand(() -> shooter.stopLoadFuel()));
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.

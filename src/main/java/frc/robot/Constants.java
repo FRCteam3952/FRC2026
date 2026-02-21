@@ -12,6 +12,7 @@ public class Constants {
         public static int AGITATOR_CAN_ID = 4;
         public static int FLYWHEEL_CAN_ID = 20;
         public static int UPPER_INTAKE_CAN_ID = 21;
+        public static int HOOD_COVER_CAN_ID = 22;
     }
 
     public static class NetworkTablesConstants {
