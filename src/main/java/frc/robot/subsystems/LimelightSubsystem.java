@@ -37,7 +37,7 @@ public class LimelightSubsystem extends SubsystemBase {
     public void periodic() {
         // TODO: Have an odometry thread, instead of doing all the odometry stuff here.
         double currentTime = Timer.getFPGATimestamp();
-        this.timeSinceLastTick = currentTime - this.timeAtLastTick;
+        this.timeSinceLastTick = Math.max(0, currentTime - this.timeAtLastTick);
         this.timeAtLastTick = currentTime;
 
         this.timeSinceLastReading += this.timeSinceLastTick;
@@ -67,7 +67,7 @@ public class LimelightSubsystem extends SubsystemBase {
 
             // Add it to your pose estimator
             // TODO: do we tune these stdevs?
-            drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
+            drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 2.0));
             drivetrain.addVisionMeasurement(
                 mt2.pose,
                 mt2.timestampSeconds

@@ -7,6 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.Optional;
+import java.util.ResourceBundle.Control;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.utility.LinearPath;
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LimelightSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 //import frc.robot.subsystems.IntakeSubsystem;
@@ -49,11 +51,12 @@ public class RobotContainer {
 
     private Command teleopDriveCommmand;
     private Command followApriltagCommand;
+    private Command pointAndShootCommand;
     
-
     // private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandPS5Controller joystick = new CommandPS5Controller(0);
     
+    public final IntakeSubsystem intake = new IntakeSubsystem();
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final LimelightSubsystem limelights = new LimelightSubsystem(drivetrain);
     public final ShooterSubsystem shooter = new ShooterSubsystem();
@@ -76,124 +79,100 @@ public class RobotContainer {
         limelights.updateMegaTag2RobotYaw();
 
         teleopDriveCommmand = drivetrain.applyRequest(() -> {
-            // System.out.println("Apriltag Entry A: " + NetworkTablesUtil.getAprilTagEntry('a'));
-            // System.out.println("Apriltag Entry B: " + NetworkTablesUtil.getAprilTagEntry('b'));
-            // System.out.println("Apriltag Entry C: " + NetworkTablesUtil.getAprilTagEntry('c'));
-
+            System.out.println("teleopDrive");
             return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
                 .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
-                .withRotationalRate(-joystick.getRightX()*MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+                .withRotationalRate(-joystick.getRightX()*MaxAngularRate) // Drive counterclockwise with negative X (left)
                 .withDeadband(0.1);
-            });
+        });
     
+
+
         followApriltagCommand = drivetrain.applyRequest(() -> {
-            {
-            // Optional<double[]> optionalBotPose = NetworkTablesUtil.getAprilTagEntry('b');
-
-            // if (optionalBotPose.isEmpty()) {
-            //     System.out.println("no bot pose :(");
-
-            //     return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
-            //         .withVelocityY(0) // Drive left with negative X (left) (MaxSpeed)
-            //         .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-            // }
-
-            // double[] botPose = optionalBotPose.get();
-
-            // double currentX = botPose[0]; // probably correct
-            // double currentY = botPose[1];
-            // double currentYaw = botPose[5];
-            // System.out.println("currentX: " + currentX + " & expectedX = " + drivetrain.getExpectedX()+"\n"
-            // +"currentY: " + currentY + " & expectedY = " + drivetrain.getExpectedY()+"\n"
-            // +"currentYaw: " + currentYaw + " & expectedYaw = " + 0);
-            }
-
             Pose2d botPose = drivetrain.getState().Pose;
-
-            {
-            // For some reason we keep getting (0, 0) when the limelight doesn't detect the apriltag, even though that's not supposed to be the default.
-            // This code is here to fix that.
-            // if (currentX == 0 && currentY == 0) {
-            //     return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
-            //         .withVelocityY(0) // Drive left with negative X (left) (MaxSpeed)
-            //         .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-            // 
-            }
-
-            // double expectedX = drivetrain.getExpectedX();
-            // double expectedY = drivetrain.getExpectedY();
 
             double maxSpeed = 0.1;
 
-            double kPYaw = 0.4;
             double maxRotationalSpeed = 0.2;
 
-            double towerX = 12.00; // this is made up and not a real number at all.
-            double towerY = 4.00;
+            double hubX = Constants.FieldConstants.HUB_CENTER_TRANSLATION.getX();
+            double hubY = Constants.FieldConstants.HUB_CENTER_TRANSLATION.getY();
 
-            // Auto-target the tower code
-            double xDifference = towerX - botPose.getX();
-            double yDifference = towerY - botPose.getY();
-            double expectedYaw = -Math.atan(xDifference / yDifference); // clockwise is positive
+            double xSpeed = Math.pow(joystick.getLeftY(), 3) * MaxSpeed;
+            double ySpeed = Math.pow(joystick.getLeftX(), 3) * MaxSpeed;
+            double xDifference = hubX - botPose.getX();
+            double yDifference = hubY - botPose.getY();
+            double hubYaw = Math.atan(yDifference / xDifference); // clockwise is positive
+            double hubDifference = Math.sqrt(Math.pow(xDifference, 2) + Math.pow(xDifference, 2));
+            double fuelSpeed = ControlUtils.getFuelSpeed(hubDifference);
+            double expectedYaw = Math.atan((fuelSpeed*Math.sin(hubYaw) - ySpeed)/(fuelSpeed*Math.cos(hubYaw) - xSpeed));
+            // roughly -pi/2
             if (xDifference < 0) {
-                expectedYaw = 90 - expectedYaw;
+                expectedYaw += Math.PI;
+            }
+            System.out.println("expectedYaw = " + expectedYaw + 
+                "\nxPosition = " + drivetrain.getState().Pose.getX() + 
+                "\nyPosition = " + drivetrain.getState().Pose.getY());
+            // 
+
+            // expectedYaw += Math.PI / 2;
+            // // face backwards so limelight can still work
+            // expectedYaw += 0.38; // Correction factor: true zero is off by 0.38.
+            // expectedYaw += Math.PI; // correct for using wpiBlue instead of red
+            while (expectedYaw > Math.PI) {
+                expectedYaw -= Math.PI * 2;
+            }
+            while (expectedYaw < -Math.PI) {
+                expectedYaw += Math.PI * 2;
             }
 
+            double yawSpeed = ControlUtils.clamp(drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), expectedYaw)) * maxRotationalSpeed;
 
-            double xSpeed = -ControlUtils.clamp(drivetrain.getXSpeed(botPose.getX())) * maxSpeed;
-            double ySpeed = -ControlUtils.clamp(drivetrain.getYSpeed(botPose.getY())) * maxSpeed;
-            double yawSpeed = ControlUtils.clamp((expectedYaw - botPose.getRotation().getRadians()) * kPYaw) * maxRotationalSpeed;
+            // System.out.println(
+            //     "expectedYaw=" + expectedYaw + " | currentYaw = " + botPose.getRotation() +  " | yawSpeed = " + yawSpeed + 
+            //     "\nxDifference= " + xDifference + " | robotX=" + botPose.getX() + " | hubX=" + hubX +
+            //     "\nyDifference= " + yDifference + " | robotY=" + botPose.getY() + " | hubY=" + hubY
+            // );
 
 
             drivetrain.setSetpoint(14.79, 4.00);
+            // System.out.println("hood position (unclamped) = " + ControlUtils.clamp(yawSpeed));
+            System.out.println("flywheel speed" + ControlUtils.getFlywheelSpeed(drivetrain.distanceToHub()) + 
+              "\ndistanceToHub = " + drivetrain.distanceToHub() + 
+             "\nhood setpoint (raw) = " + ControlUtils.getRawHoodPosition(drivetrain.distanceToHub()));
 
-            double expectedX = drivetrain.getXSetpoint();
-            double expectedY = drivetrain.getYSetpoint();
-            System.out.println("\nxSpeed: " + xSpeed
-            +"\nySpeed: " + ySpeed
-            +"\nyawSpeed " + yawSpeed + "\ncurrentX = " + botPose.getX() + " | expectedX = " + expectedX
-            + "\ncurrentY = " + botPose.getY() + " | expectedY" + expectedY);
-
-            // reverse if a button is pressed
-            if (joystick.triangle().getAsBoolean()) {
-                // System.out.println("Inverting the outputs!");
-                xSpeed = -xSpeed;
-                ySpeed = -ySpeed;
-            }
-
-            if (drivetrain.atXSetpoint()) {
-                xSpeed = 0;
-            }
-            if (drivetrain.atYSetpoint()) {
-                ySpeed = 0;
-            }
-
-            // Don't move for now
-            // return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
-            //     .withVelocityY(0) // Drive left with negative X (left) (MaxSpeed)
-            //     .withRotationalRate(0);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+            
+            double hoodPosition = ControlUtils.getHoodPosition(drivetrain.distanceToHub());
+            shooter.setHoodSetPoint(hoodPosition);
 
             // System.out.println("Driving at those speeds!");
-            return drive.withVelocityX(xSpeed * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-                .withVelocityY(ySpeed * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+            return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
                 .withRotationalRate(yawSpeed * MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
                 .withDeadband(0.1);
-            });
+        });
 
-        drivetrain.setDefaultCommand(teleopDriveCommmand);
+        
+
+        drivetrain.setDefaultCommand(followApriltagCommand);
 
         // joystick.R2().onTrue(new InstantCommand(PratheekIntake::startLoadFuel));
         // joystick.R2().onFalse(new InstantCommand(PratheekIntake::stopLoadFuel));
         
         joystick.R2().whileTrue(teleopDriveCommmand);
 
-        joystick.L2().onTrue(new InstantCommand(() -> shooter.startLoadFuelFlywheel())
+        joystick.L2().onTrue(new InstantCommand(() -> {
+            double distanceToHub = drivetrain.distanceToHub();
+            double flywheelSpeed = ControlUtils.getFlywheelSpeed(distanceToHub);
+            shooter.setFlywheelSpeed(flywheelSpeed);
+        })
             .andThen(new WaitCommand(0.5))
             .andThen(new InstantCommand(() -> {
                 if (joystick.L2().getAsBoolean()) {
                     shooter.startLoadFuel(); 
                 }
             })));
+        joystick.L2().onFalse(new InstantCommand(() -> shooter.stopLoadFuel()));
         
         // Need to set setpoints
         // GUIDE TO MAKING THE ROBOT SHOOTER SETPOINT-CONTROLLED INSTEAD OF INCREMENTAL
@@ -202,12 +181,15 @@ public class RobotContainer {
         // joystick.povUp().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(1.0)));
         // joystick.povDown().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(0.0)));
         
-        joystick.povUp().onTrue(new InstantCommand(() -> shooter.riseFuelHood()));
-        joystick.povDown().onTrue(new InstantCommand(() -> shooter.lowerFuelHood()));
-        joystick.povUp().onFalse(new InstantCommand(() -> shooter.stopFuelHood()));
-        joystick.povDown().onFalse(new InstantCommand(() -> shooter.stopFuelHood()));
 
-        joystick.L2().onFalse(new InstantCommand(() -> shooter.stopLoadFuel()));
+        joystick.circle().onTrue(new InstantCommand(intake::startLoadFuel));
+        joystick.circle().onFalse(new InstantCommand(intake::stopLoadFuel));
+
+        // joystick.povUp().onTrue(new InstantCommand(shooter::riseFuelHood));
+        // joystick.povDown().onTrue(new InstantCommand(shooter::lowerFuelHood));
+        // joystick.povUp().onFalse(new InstantCommand(shooter::stopFuelHood));
+        // joystick.povDown().onFalse(new InstantCommand(shooter::stopFuelHood));
+
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
@@ -216,9 +198,9 @@ public class RobotContainer {
         );
 
         joystick.cross().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.circle().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
+        // joystick.circle().whileTrue(drivetrain.applyRequest(() ->
+        //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        // ));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.

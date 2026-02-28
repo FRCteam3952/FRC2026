@@ -28,7 +28,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private final double hoodOnePosition = 0.0483;
     private final double hoodPositionRange = 1 - hoodZeroPosition + hoodOnePosition;
 
-    private final PIDController hoodPositionController = new PIDController(0.9, 0, 0);
+    private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
 
     public ShooterSubsystem() {
         lowerIntakeMotor = new SparkMax(Ports.LOWER_INTAKE_CAN_ID, MotorType.kBrushless);
@@ -77,10 +77,10 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        lowerIntakeMotor.set(-0.5);
-        roller.set(0.5);
-        agitator.set(-0.5);
-        upperIntakeMotor.set(0.5);
+        lowerIntakeMotor.set(-0.6);
+        roller.set(0.6);
+        agitator.set(-0.6);
+        upperIntakeMotor.set(0.6);
     }
 
     public void stopLoadFuel() {
@@ -94,7 +94,7 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         // Check to see if the limit switch has been triggered
-        // System.out.println("position = " + hoodCoverAbsoluteEncoder.getPosition());
-        //runHoodPositionPID();
+        // System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
+        runHoodPositionPID();
     }
 }

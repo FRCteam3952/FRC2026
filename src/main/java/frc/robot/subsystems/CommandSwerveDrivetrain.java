@@ -25,8 +25,9 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.Constants.FieldConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.util.ControlUtils;
 import frc.robot.util.LimelightHelpers;
 
 /**
@@ -42,6 +43,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private PIDController yController = new PIDController(4.0, 0.0, 0);
     private PIDController xController = new PIDController(4.0, 0.0, 0);
+    private PIDController yawController = new PIDController(10.0, 0, 0);
 
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier m_simNotifier = null;
@@ -199,6 +201,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // these tolerances are Very High! reset down to ~0.05 soon
         this.xController.setTolerance(0.05);
         this.yController.setTolerance(0.05);
+        this.yawController.setTolerance(0.03);
+
+        this.yawController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     /**
@@ -249,6 +254,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return this.yController.atSetpoint();
     }
 
+    public double distanceToHub() {
+        return this.getState().Pose.getTranslation().getDistance(FieldConstants.HUB_CENTER_TRANSLATION);
+    }
+
     public void setSetpoint(double newX, double newY) {
         this.xController.setSetpoint(newX);
         this.yController.setSetpoint(newY);
@@ -262,14 +271,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return this.yController.calculate(currentY);
     }
 
+    public double calculateYawSpeed(double currentYaw, double targetYaw) {
+        return this.yawController.calculate(currentYaw, targetYaw);
+    }
+
     @Override
     public void periodic() {
-        Pose2d currentPose = this.getState().Pose;
-
-        // System.out.println("currentX   = " + currentPose.getX());
-        // System.out.println("currentY   = " + currentPose.getY());
-        // System.out.println("currentYaw = " + currentPose.getRotation());
-
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
