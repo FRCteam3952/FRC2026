@@ -16,7 +16,10 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,6 +38,7 @@ import frc.robot.subsystems.LimelightSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 //import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.util.ControlUtils;
+import frc.robot.util.KinematicsUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.NetworkTablesUtil;
 
@@ -62,6 +66,8 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final LimelightSubsystem limelights = new LimelightSubsystem(drivetrain);
     public final ShooterSubsystem shooter = new ShooterSubsystem();
+    private boolean shooterOn = false;
+
     
     // public final TurretSubsystem deniTurret = new TurretSubsystem();
 
@@ -88,62 +94,20 @@ public class RobotContainer {
 
         followApriltagCommand = drivetrain.applyRequest(() -> {
             Pose2d botPose = drivetrain.getState().Pose;
-
-            double maxSpeed = 0.1;
-
+            ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
             double maxRotationalSpeed = 0.2;
+            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            Angle hoodAngle = shooterState.getSecond().getSecond();
+            Angle yawAngle = shooterState.getSecond().getFirst();
+            LinearVelocity flywheelVelocty = shooterState.getFirst();
+            double yawSpeed = ControlUtils.clamp(drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians))) * maxRotationalSpeed;
 
-            double hubX = Constants.FieldConstants.RED_HUB_CENTER_TRANSLATION.getX();
-            double hubY = Constants.FieldConstants.RED_HUB_CENTER_TRANSLATION.getY();
-
-            double xSpeed = Math.pow(joystick.getLeftY(), 3) * MaxSpeed;
-            double ySpeed = Math.pow(joystick.getLeftX(), 3) * MaxSpeed;
-            double xDifference = hubX - botPose.getX();
-            double yDifference = hubY - botPose.getY();
-            double hubYaw = Math.atan(yDifference / xDifference); // clockwise is positive
-            double hubDifference = Math.sqrt(Math.pow(xDifference, 2) + Math.pow(xDifference, 2));
-            double fuelSpeed = ControlUtils.getFuelSpeed(hubDifference);
-            double expectedYaw = Math.atan((fuelSpeed*Math.sin(hubYaw) - ySpeed)/(fuelSpeed*Math.cos(hubYaw) - xSpeed));
-            // roughly -pi/2
-            if (xDifference < 0) {
-                expectedYaw += Math.PI;
+            shooter.setHoodSetpoint(hoodAngle);
+            if (shooterOn) {
+                shooter.setFlywheelSpeed(flywheelVelocty);
+            } else {
+                shooter.setFlywheelSpeed(0);
             }
-            System.out.println("expectedYaw = " + expectedYaw + 
-                "\nxPosition = " + drivetrain.getState().Pose.getX() + 
-                "\nyPosition = " + drivetrain.getState().Pose.getY());
-            // 
-
-            // expectedYaw += Math.PI / 2;
-            // // face backwards so limelight can still work
-            // expectedYaw += 0.38; // Correction factor: true zero is off by 0.38.
-            // expectedYaw += Math.PI; // correct for using wpiBlue instead of red
-            while (expectedYaw > Math.PI) {
-                expectedYaw -= Math.PI * 2;
-            }
-            while (expectedYaw < -Math.PI) {
-                expectedYaw += Math.PI * 2;
-            }
-
-            double yawSpeed = ControlUtils.clamp(drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), expectedYaw)) * maxRotationalSpeed;
-
-            // System.out.println(
-            //     "expectedYaw=" + expectedYaw + " | currentYaw = " + botPose.getRotation() +  " | yawSpeed = " + yawSpeed + 
-            //     "\nxDifference= " + xDifference + " | robotX=" + botPose.getX() + " | hubX=" + hubX +
-            //     "\nyDifference= " + yDifference + " | robotY=" + botPose.getY() + " | hubY=" + hubY
-            // );
-
-
-            drivetrain.setSetpoint(14.79, 4.00);
-            // System.out.println("hood position (unclamped) = " + ControlUtils.clamp(yawSpeed));
-            System.out.println("flywheel speed" + ControlUtils.getFlywheelSpeed(drivetrain.distanceToHub()) + 
-              "\ndistanceToHub = " + drivetrain.distanceToHub() + 
-             "\nhood setpoint (raw) = " + ControlUtils.getRawHoodPosition(drivetrain.distanceToHub()));
-
-            
-            double hoodPosition = ControlUtils.getHoodPosition(drivetrain.distanceToHub());
-            shooter.setHoodSetPoint(hoodPosition);
-
-            // System.out.println("Driving at those speeds!");
             return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
                 .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
                 .withRotationalRate(yawSpeed * MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
@@ -160,9 +124,7 @@ public class RobotContainer {
         joystick.R2().whileTrue(teleopDriveCommmand);
 
         joystick.L2().onTrue(new InstantCommand(() -> {
-            double distanceToHub = drivetrain.distanceToHub();
-            double flywheelSpeed = ControlUtils.getFlywheelSpeed(distanceToHub);
-            shooter.setFlywheelSpeed(flywheelSpeed);
+            shooterOn = true;
         })
             .andThen(new WaitCommand(0.5))
             .andThen(new InstantCommand(() -> {
@@ -170,7 +132,11 @@ public class RobotContainer {
                     shooter.startLoadFuel(); 
                 }
             })));
-        joystick.L2().onFalse(new InstantCommand(() -> shooter.stopLoadFuel()));
+        joystick.L2().onFalse(new InstantCommand(() -> {
+            shooterOn = false;
+            shooter.stopLoadFuel(); 
+
+        }));
         
         // Need to set setpoints
         // GUIDE TO MAKING THE ROBOT SHOOTER SETPOINT-CONTROLLED INSTEAD OF INCREMENTAL

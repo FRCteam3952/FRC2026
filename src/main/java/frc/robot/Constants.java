@@ -32,4 +32,9 @@ public class Constants {
         public static final Translation2d RED_HUB_CENTER_TRANSLATION = new Translation2d(11.9150, 4.0345);
         public static final Translation2d BLUE_HUB_CENTER_TRANSLATION = new Translation2d(4.6256, 4.0345);
     }
+
+    public static class RobotConstants {
+        public static final double minShooterAngle = 18.0;
+        public static final double maxShooterAngle = 45.0; // not sure
+    }
 }

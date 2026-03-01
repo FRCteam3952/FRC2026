@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import java.util.Optional;
 
 import com.revrobotics.AbsoluteEncoder;
@@ -10,10 +13,14 @@ import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.Ports;
+import frc.robot.util.ControlUtils;
 
 public class ShooterSubsystem extends SubsystemBase {
     private final SparkMax lowerIntakeMotor;
@@ -62,6 +69,13 @@ public class ShooterSubsystem extends SubsystemBase {
         hoodPositionController.setSetpoint(setPoint);
     }
 
+    public void setHoodSetpoint(Angle angleFromHorizontal) {
+        double degreesFromVertical = 90 - angleFromHorizontal.in(Degrees);
+        double shooterRange = Constants.RobotConstants.maxShooterAngle - Constants.RobotConstants.minShooterAngle;
+        double setpoint = (degreesFromVertical - Constants.RobotConstants.minShooterAngle) / shooterRange;
+        setHoodSetPoint(setpoint);
+    }
+
     public double getHoodPosition() {
         double rawPosition = hoodCoverAbsoluteEncoder.getPosition();
         double possiblyNegativeTruePosition = rawPosition - hoodZeroPosition;
@@ -74,6 +88,15 @@ public class ShooterSubsystem extends SubsystemBase {
     
     public void runHoodPositionPID() {
         hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
+    }
+    
+    public void setFlywheelSpeed(LinearVelocity flywheelVelocity) {
+        double fuelSpeed = flywheelVelocity.in(MetersPerSecond);
+        double fuelSpeedToMotorOutput = 0.03131625;
+        double flywheelSpeedLossFactor = 1.5; // previously 1.3
+
+        double motorOutput = fuelSpeed * fuelSpeedToMotorOutput * flywheelSpeedLossFactor;
+        setFlywheelSpeed(-ControlUtils.clamp(0, motorOutput, 0.8));
     }
 
     public void startLoadFuel() {
