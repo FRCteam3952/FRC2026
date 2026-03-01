@@ -67,7 +67,7 @@ public class LimelightSubsystem extends SubsystemBase {
 
             // Add it to your pose estimator
             // TODO: do we tune these stdevs?
-            drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 2.0));
+            drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
             drivetrain.addVisionMeasurement(
                 mt2.pose,
                 mt2.timestampSeconds
@@ -77,6 +77,7 @@ public class LimelightSubsystem extends SubsystemBase {
 
     public void updateMegaTag2RobotYaw() {
         double robotYaw = this.drivetrain.getPigeon2().getYaw().getValue().in(Degrees);
+        System.out.println("-------- robotYaw = " + robotYaw);
         LimelightHelpers.SetRobotOrientation("limelight-a", robotYaw, 0.0, 0.0, 0.0, 0.0, 0.0);
         LimelightHelpers.SetRobotOrientation("limelight-b", robotYaw, 0.0, 0.0, 0.0, 0.0, 0.0);
         LimelightHelpers.SetRobotOrientation("limelight-c", robotYaw, 0.0, 0.0, 0.0, 0.0, 0.0);

@@ -17,6 +17,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -72,10 +74,6 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention.
 
         // Initialize limelights and drivetrain yaw for odometry
-        // TODO: what do the different modes do, exactly?
-        LimelightHelpers.SetIMUMode("limelight-a", 1);
-        LimelightHelpers.SetIMUMode("limelight-b", 1);
-        LimelightHelpers.SetIMUMode("limelight-c", 1);
         limelights.updateMegaTag2RobotYaw();
 
         teleopDriveCommmand = drivetrain.applyRequest(() -> {
@@ -212,6 +210,13 @@ public class RobotContainer {
         // Reset the field-centric heading on left bumper press.
         joystick.L1().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
+        // Fix for gyro starting backwards problem
+        if (DriverStation.getAlliance().equals(Optional.of(Alliance.Red))) {
+            drivetrain.seedFieldCentric(Rotation2d.k180deg);
+        } else {
+            drivetrain.seedFieldCentric(Rotation2d.kZero);
+        }
+
         drivetrain.registerTelemetry(logger::telemeterize);
     }
     
@@ -221,7 +226,10 @@ public class RobotContainer {
         return Commands.sequence(
             // Reset our field centric heading to match the robot
             // facing away from our alliance station wall (0 deg).
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+            drivetrain.runOnce(() -> {
+                System.out.println("Auto centered!");
+                drivetrain.seedFieldCentric(Rotation2d.kZero);
+            }),
             // Then slowly drive forward (away from us) for 5 seconds.
             drivetrain.applyRequest(() ->
                 drive.withVelocityX(0)//init 0.5

@@ -33,7 +33,11 @@ public class Robot extends TimedRobot {
     }
 
     @Override
-    public void disabledInit() {}
+    public void disabledInit() {
+        LimelightHelpers.SetIMUMode("limelight-a", 1);
+        LimelightHelpers.SetIMUMode("limelight-b", 1);
+        LimelightHelpers.SetIMUMode("limelight-c", 1);
+    }
 
     @Override
     public void disabledPeriodic() {}
@@ -61,10 +65,10 @@ public class Robot extends TimedRobot {
         if (m_autonomousCommand != null) {
            CommandScheduler.getInstance().cancel(m_autonomousCommand);
         }
-        // TODO: this code probably shouldn't be here.
-        LimelightHelpers.SetIMUMode("limelight-a", 3);
-        LimelightHelpers.SetIMUMode("limelight-b", 3);
-        LimelightHelpers.SetIMUMode("limelight-c", 3);
+        
+        LimelightHelpers.SetIMUMode("limelight-a", 4);
+        LimelightHelpers.SetIMUMode("limelight-b", 4);
+        LimelightHelpers.SetIMUMode("limelight-c", 4);
     }
 
     @Override
