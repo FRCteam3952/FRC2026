@@ -29,6 +29,7 @@ public class Constants {
     public static class FieldConstants {
         // TODO: this probably isn't relatively correct
         // next try 0 for y, because that might be the middle
-        public static final Translation2d HUB_CENTER_TRANSLATION = new Translation2d(11.00, 4.25);
+        public static final Translation2d RED_HUB_CENTER_TRANSLATION = new Translation2d(11.9150, 4.0345);
+        public static final Translation2d BLUE_HUB_CENTER_TRANSLATION = new Translation2d(4.6256, 4.0345);
     }
 }

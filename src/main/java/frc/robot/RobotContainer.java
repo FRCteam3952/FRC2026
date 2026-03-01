@@ -93,8 +93,8 @@ public class RobotContainer {
 
             double maxRotationalSpeed = 0.2;
 
-            double hubX = Constants.FieldConstants.HUB_CENTER_TRANSLATION.getX();
-            double hubY = Constants.FieldConstants.HUB_CENTER_TRANSLATION.getY();
+            double hubX = Constants.FieldConstants.RED_HUB_CENTER_TRANSLATION.getX();
+            double hubY = Constants.FieldConstants.RED_HUB_CENTER_TRANSLATION.getY();
 
             double xSpeed = Math.pow(joystick.getLeftY(), 3) * MaxSpeed;
             double ySpeed = Math.pow(joystick.getLeftX(), 3) * MaxSpeed;

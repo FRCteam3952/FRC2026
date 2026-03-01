@@ -255,7 +255,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public double distanceToHub() {
-        return this.getState().Pose.getTranslation().getDistance(FieldConstants.HUB_CENTER_TRANSLATION);
+        return this.getState().Pose.getTranslation().getDistance(FieldConstants.RED_HUB_CENTER_TRANSLATION);
     }
 
     public void setSetpoint(double newX, double newY) {
