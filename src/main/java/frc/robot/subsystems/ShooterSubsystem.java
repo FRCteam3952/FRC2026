@@ -8,6 +8,9 @@ import java.util.Optional;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 
@@ -27,6 +30,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private final SparkFlex roller;
     private final SparkFlex agitator;
     private final SparkMax flywheel;
+    private final SparkMax flywheel2;
     private final SparkMax upperIntakeMotor;
     private final SparkMax hoodCover;
 
@@ -42,35 +46,47 @@ public class ShooterSubsystem extends SubsystemBase {
         roller = new SparkFlex(Ports.ROLLER_CAN_ID, MotorType.kBrushless);
         agitator = new SparkFlex(Ports.AGITATOR_CAN_ID, MotorType.kBrushless);
         flywheel = new SparkMax(Ports.FLYWHEEL_CAN_ID, MotorType.kBrushless);
+        flywheel2 = new SparkMax(Ports.FLYWHEEL2_CAN_ID, MotorType.kBrushless);
         upperIntakeMotor = new SparkMax(Ports.UPPER_INTAKE_CAN_ID, MotorType.kBrushless);
         hoodCover = new SparkMax(Ports.HOOD_COVER_CAN_ID, MotorType.kBrushless);
 
         hoodCoverAbsoluteEncoder = hoodCover.getAbsoluteEncoder();
         hoodPositionController.setSetpoint(0.0);
+        
+        // SparkMaxConfig flywheelConfig = new SparkMaxConfig();
+        // flywheelConfig.voltageCompensation(9.0);
+        // flywheel.configure(flywheelConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+        // flywheel2.configure(flywheelConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
     }
 
     public void startLoadFuelFlywheel() {
-        flywheel.set(-0.75);
+        setFlywheelSpeed(-0.7);
     }
+
     public void setFlywheelSpeed(double speed) {
+        // System.out.println("speed = " + speed);
         flywheel.set(speed);
+        flywheel2.set(-speed);
     }
+
     public void riseFuelHood() { // Need to check whether changing the position of the hood will collide with the min/max thresholds
         hoodCover.set(-0.2);
     }
+
     public void lowerFuelHood() {
-        hoodCover.set(0.2);
-        
+        hoodCover.set(0.2); 
     }
+
     public void stopFuelHood() {
         hoodCover.set(0);
     }
+
     public void setHoodSetPoint(double setPoint) {
         hoodPositionController.setSetpoint(setPoint);
     }
 
     public void setHoodSetpoint(Angle angleFromHorizontal) {
-        double degreesFromVertical = 90 - angleFromHorizontal.in(Degrees);
+        double degreesFromVertical = 90 - angleFromHorizontal.in(Degrees); 
         double shooterRange = Constants.RobotConstants.maxShooterAngle - Constants.RobotConstants.minShooterAngle;
         double setpoint = (degreesFromVertical - Constants.RobotConstants.minShooterAngle) / shooterRange;
         setHoodSetPoint(setpoint);
@@ -87,23 +103,25 @@ public class ShooterSubsystem extends SubsystemBase {
     }
     
     public void runHoodPositionPID() {
+        // TEMPORARY DISABLE
         hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
     }
     
     public void setFlywheelSpeed(LinearVelocity flywheelVelocity) {
         double fuelSpeed = flywheelVelocity.in(MetersPerSecond);
         double fuelSpeedToMotorOutput = 0.03131625;
-        double flywheelSpeedLossFactor = 1.5; // previously 1.3
+        double flywheelSpeedLossFactor = 3.5; // previously 1.3
 
         double motorOutput = fuelSpeed * fuelSpeedToMotorOutput * flywheelSpeedLossFactor;
-        setFlywheelSpeed(-ControlUtils.clamp(0, motorOutput, 0.8));
+        // System.out.println("motorOutput: " + motorOutput);
+        setFlywheelSpeed(ControlUtils.clamp(0, motorOutput, 0.8));
     }
 
     public void startLoadFuel() {
-        lowerIntakeMotor.set(-0.6);
-        roller.set(0.6);
-        agitator.set(-0.6);
-        upperIntakeMotor.set(0.6);
+        lowerIntakeMotor.set(0.0);
+        roller.set(0.9);
+        agitator.set(0.2);
+        upperIntakeMotor.set(0.8);
     }
 
     public void stopLoadFuel() {
@@ -111,6 +129,7 @@ public class ShooterSubsystem extends SubsystemBase {
         roller.set(0);
         agitator.set(0);
         flywheel.set(0);
+        flywheel2.set(0);
         upperIntakeMotor.set(0);    
     }
 

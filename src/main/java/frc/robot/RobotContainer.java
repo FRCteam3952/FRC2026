@@ -16,12 +16,15 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -66,6 +69,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final LimelightSubsystem limelights = new LimelightSubsystem(drivetrain);
     public final ShooterSubsystem shooter = new ShooterSubsystem();
+    public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
 
     
@@ -80,79 +84,93 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention.
 
         // Initialize limelights and drivetrain yaw for odometry
+        LimelightHelpers.SetIMUMode("limelight-a", 1);
+        LimelightHelpers.SetIMUMode("limelight-b", 1);
+        LimelightHelpers.SetIMUMode("limelight-c", 1);
         limelights.updateMegaTag2RobotYaw();
+        drivetrain.initPID();
+        pdp.setSwitchableChannel(true);
 
         teleopDriveCommmand = drivetrain.applyRequest(() -> {
-            System.out.println("teleopDrive");
             return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-                .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
-                .withRotationalRate(-joystick.getRightX()*MaxAngularRate) // Drive counterclockwise with negative X (left)
-                .withDeadband(0.1);
+                        .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+                        .withRotationalRate(-joystick.getRightX()*MaxAngularRate) // Drive counterclockwise with negative X (left)
+                        .withDeadband(0.1);
         });
     
-
-
         followApriltagCommand = drivetrain.applyRequest(() -> {
+            // THE ROBOT WON'T WORK UNTIL WE SWTICH THIS LINE OF CODE BACK IN
             Pose2d botPose = drivetrain.getState().Pose;
-            ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
-            double maxRotationalSpeed = 0.2;
-            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
-            Angle hoodAngle = shooterState.getSecond().getSecond();
-            Angle yawAngle = shooterState.getSecond().getFirst();
-            LinearVelocity flywheelVelocty = shooterState.getFirst();
-            double yawSpeed = ControlUtils.clamp(drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians))) * maxRotationalSpeed;
+            // Pose2d botPose = new Pose2d(13.9150, 4.0345, new Rotation2d(0));
 
+            ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
+            
+            // System.out.println("Follow Apriltag Command");
+            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            LinearVelocity flywheelVelocty = shooterState.getFirst();
+            Angle yawAngle = shooterState.getSecond().getFirst();
+            Angle hoodAngle = shooterState.getSecond().getSecond();
+            
+            // Auto aim shooter
             shooter.setHoodSetpoint(hoodAngle);
             if (shooterOn) {
                 shooter.setFlywheelSpeed(flywheelVelocty);
             } else {
                 shooter.setFlywheelSpeed(0);
             }
+            
+            // Drive teleop, auto aiming robot yaw towards hub
+            double rotationSpeedLimiter = 0.2;
+            double yawSpeed = drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
+            yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+
             return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
                 .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
                 .withRotationalRate(yawSpeed * MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
                 .withDeadband(0.1);
         });
 
-        
+        // R2 to auto aim
+        joystick.R2().whileTrue(followApriltagCommand);
+        drivetrain.setDefaultCommand(teleopDriveCommmand);        
 
-        drivetrain.setDefaultCommand(followApriltagCommand);
-
-        // joystick.R2().onTrue(new InstantCommand(PratheekIntake::startLoadFuel));
-        // joystick.R2().onFalse(new InstantCommand(PratheekIntake::stopLoadFuel));
-        
-        joystick.R2().whileTrue(teleopDriveCommmand);
-
-        joystick.L2().onTrue(new InstantCommand(() -> {
-            shooterOn = true;
-        })
+        // // L2 to shoot, (waits for flywheel to get up to speed)
+        joystick.L2().onTrue(new InstantCommand(() -> { shooterOn = true; })
             .andThen(new WaitCommand(0.5))
             .andThen(new InstantCommand(() -> {
-                if (joystick.L2().getAsBoolean()) {
+                if (joystick.L2().getAsBoolean() == true) {
                     shooter.startLoadFuel(); 
                 }
             })));
+
         joystick.L2().onFalse(new InstantCommand(() -> {
             shooterOn = false;
-            shooter.stopLoadFuel(); 
-
+            shooter.stopLoadFuel();
         }));
         
-        // Need to set setpoints
         // GUIDE TO MAKING THE ROBOT SHOOTER SETPOINT-CONTROLLED INSTEAD OF INCREMENTAL
         // 1. change these commands (optional)
         // 2. change the periodic method of the shooter to call the PID thing command (commented out Rn)
         // joystick.povUp().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(1.0)));
         // joystick.povDown().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(0.0)));
-        
-
-        joystick.circle().onTrue(new InstantCommand(intake::startLoadFuel));
-        joystick.circle().onFalse(new InstantCommand(intake::stopLoadFuel));
-
-        // joystick.povUp().onTrue(new InstantCommand(shooter::riseFuelHood));
+        // TODO: intake pivot / 27979
+        // joystick.povUp().onTrue(new InstantCommand(intake));
         // joystick.povDown().onTrue(new InstantCommand(shooter::lowerFuelHood));
         // joystick.povUp().onFalse(new InstantCommand(shooter::stopFuelHood));
         // joystick.povDown().onFalse(new InstantCommand(shooter::stopFuelHood));
+
+
+        // disabled for now while tim's thing is attached to it.
+        // joystick.povUp().onTrue(new InstantCommand(intake::startPivotUpwards));
+        // joystick.povDown().onTrue(new InstantCommand(intake::startPivotDown));
+        // joystick.povUp().onFalse(new InstantCommand(intake::stopPivot));
+        // joystick.povDown().onFalse(new InstantCommand(intake::stopPivot));
+
+        // L1 to intake fuel
+        joystick.L1().onTrue(new InstantCommand(intake::startLoadFuel));
+        joystick.L1().onFalse(new InstantCommand(intake::stopLoadFuel));
+
+        // End of our code. Template code below:
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
@@ -174,14 +192,15 @@ public class RobotContainer {
         // joystick.start().and(joystick.square()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on left bumper press.
+        // Note: For some reason this doesn't work for us? 
         joystick.L1().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-        // Fix for gyro starting backwards problem
-        if (DriverStation.getAlliance().equals(Optional.of(Alliance.Red))) {
-            drivetrain.seedFieldCentric(Rotation2d.k180deg);
-        } else {
-            drivetrain.seedFieldCentric(Rotation2d.kZero);
-        }
+        // Fix for gyro starting backwards problem, hopefully
+        // if (DriverStation.getAlliance().equals(Optional.of(Alliance.Red))) {
+        //     drivetrain.seedFieldCentric(Rotation2d.k180deg);
+        // } else {
+        //     drivetrain.seedFieldCentric(Rotation2d.kZero);
+        // }
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
@@ -194,7 +213,7 @@ public class RobotContainer {
             // facing away from our alliance station wall (0 deg).
             drivetrain.runOnce(() -> {
                 System.out.println("Auto centered!");
-                drivetrain.seedFieldCentric(Rotation2d.kZero);
+                drivetrain.seedFieldCentric(Rotation2d.kZero); // Does this account for which team we are? I guess it must
             }),
             // Then slowly drive forward (away from us) for 5 seconds.
             drivetrain.applyRequest(() ->

@@ -46,6 +46,7 @@ public class LimelightSubsystem extends SubsystemBase {
             this.timeSinceLastReading = 0.0;
             updateOdometryWithLimelightOutput();
         }
+        updateMegaTag2RobotYaw();
     }
 
     public void updateOdometryWithLimelightOutput() {
@@ -77,7 +78,6 @@ public class LimelightSubsystem extends SubsystemBase {
 
     public void updateMegaTag2RobotYaw() {
         double robotYaw = this.drivetrain.getPigeon2().getYaw().getValue().in(Degrees);
-        System.out.println("-------- robotYaw = " + robotYaw);
         LimelightHelpers.SetRobotOrientation("limelight-a", robotYaw, 0.0, 0.0, 0.0, 0.0, 0.0);
         LimelightHelpers.SetRobotOrientation("limelight-b", robotYaw, 0.0, 0.0, 0.0, 0.0, 0.0);
         LimelightHelpers.SetRobotOrientation("limelight-c", robotYaw, 0.0, 0.0, 0.0, 0.0, 0.0);

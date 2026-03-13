@@ -6,20 +6,21 @@ import edu.wpi.first.math.util.Units;
 
 public class Constants {
     public class Ports {
-        // public static int TURRET_FLYWHEEL_PORT = 22;
-        // public static int TURRET_ROTATE_PORT = 5;
-        // public static int TURRET_LOWER_INTAKE_PORT = 17;
-        // public static int TURRET_UPPER_INTAKE_PORT = 13;
-        public static int UPPER_INTAKE_PORT = 5; 
-        public static int LOWER_INTAKE_CAN_ID = 17;
-        public static int ROLLER_CAN_ID = 3;
-        public static int AGITATOR_CAN_ID = 4;
-        public static int FLYWHEEL_CAN_ID = 20;
-        public static int UPPER_INTAKE_CAN_ID = 21;
-        public static int HOOD_COVER_CAN_ID = 22;
+        // spark flexes
+        public static final int FLYWHEEL2_CAN_ID = 4; // switch if it goes backwards
+        public static final int FLYWHEEL_CAN_ID = 3;
+        public static final int AGITATOR_CAN_ID = 0; 
+        
+        // normal sparks
+        public static final int HOOD_COVER_CAN_ID = 20;
+        public static final int LOWER_INTAKE_CAN_ID = 7;
+        public static final int UPPER_INTAKE_CAN_ID = 17; 
+        public static final int ROLLER_CAN_ID = 2;
+        public static final int INTAKE_MOTOR_CAN_ID = 19;
 
-        public static int INTAKE_MOTOR_CAN_ID = 19;
-        // public static int PIVOT_MOTOR_ID = ; // idk
+        // talons
+        public static final int LEFT_INTAKE_PIVOT_CAN_ID = 24;
+        public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 14;
     }
 
     public static class NetworkTablesConstants {
@@ -35,6 +36,6 @@ public class Constants {
 
     public static class RobotConstants {
         public static final double minShooterAngle = 18.0;
-        public static final double maxShooterAngle = 45.0; // not sure
+        public static final double maxShooterAngle = 45.0;
     }
 }

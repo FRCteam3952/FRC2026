@@ -119,6 +119,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             this
         )
     );
+    
+    public void initPID() {
+        this.xController.setTolerance(0.05);
+        this.yController.setTolerance(0.05);
+        this.yawController.setTolerance(0.03);
+
+        this.yawController.enableContinuousInput(-Math.PI, Math.PI);
+    }
 
     /* The SysId routine to test */
     private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
@@ -165,6 +173,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        
+        // these tolerances are Very High! reset down to ~0.05 soon
+        this.xController.setTolerance(0.05);
+        this.yController.setTolerance(0.05);
+        this.yawController.setTolerance(0.03);
+
+        this.yawController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     /**
@@ -197,13 +212,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-
-        // these tolerances are Very High! reset down to ~0.05 soon
-        this.xController.setTolerance(0.05);
-        this.yController.setTolerance(0.05);
-        this.yawController.setTolerance(0.03);
-
-        this.yawController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     /**
