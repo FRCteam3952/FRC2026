@@ -6,9 +6,11 @@ package frc.robot;
 import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.util.LimelightHelpers;
 
 public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
@@ -31,7 +33,11 @@ public class Robot extends TimedRobot {
     }
 
     @Override
-    public void disabledInit() {}
+    public void disabledInit() {
+        LimelightHelpers.SetIMUMode("limelight-a", 1);
+        LimelightHelpers.SetIMUMode("limelight-b", 1);
+        LimelightHelpers.SetIMUMode("limelight-c", 1);
+    }
 
     @Override
     public void disabledPeriodic() {}
@@ -56,9 +62,13 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-       if (m_autonomousCommand != null) {
+        if (m_autonomousCommand != null) {
            CommandScheduler.getInstance().cancel(m_autonomousCommand);
         }
+        
+        LimelightHelpers.SetIMUMode("limelight-a", 4);
+        LimelightHelpers.SetIMUMode("limelight-b", 4);
+        LimelightHelpers.SetIMUMode("limelight-c", 4);
     }
 
     @Override

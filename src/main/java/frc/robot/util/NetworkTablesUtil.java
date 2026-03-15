@@ -44,7 +44,11 @@ public final class NetworkTablesUtil {
     
     public static Optional<double[]> getAprilTagEntry(char which) {
         double[] botPose = INSTANCE.getTable("limelight-" + which).getEntry("botpose").getDoubleArray(DEFAULT_BOTPOSE);
-        if (botPose == DEFAULT_BOTPOSE) {
+        if (botPose.length == 1 && botPose[0] == DEFAULT_BOTPOSE[0]) {
+            return Optional.empty();
+        } else if (botPose.length >= 2 && botPose[0] == 0 && botPose[1] == 0) {
+            // I don't know why it keeps returning [0, 0, 0, ...] as the default instead of the specified default,
+            // but this branch should account for that.
             return Optional.empty();
         } else {
             return Optional.of(botPose);
