@@ -24,10 +24,13 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -76,12 +79,17 @@ public class RobotContainer {
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
 
-    
-    // public final TurretSubsystem deniTurret = new TurretSubsystem();
+    private final SendableChooser<Command> autoChooser;
 
     public RobotContainer() {
+        autoChooser = AutoBuilder.buildAutoChooser("Tests");
+        SmartDashboard.putData("Auto Choices", autoChooser);
+        Command simplePath = new FollowPathCommand(null, null, null, null, null, null, null, null)
+        autoChooser.setDefaultOption("1", simplePath);
+        autoChooser.addOption("Path 1", simplePath);
+        SmartDashboard.putData(autoChooser);
         configureBindings();
-        CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+        // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
 
     private void configureBindings() {

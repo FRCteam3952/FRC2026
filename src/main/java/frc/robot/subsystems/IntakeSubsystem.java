@@ -17,8 +17,8 @@ import frc.robot.Constants.Ports;
 
 public class IntakeSubsystem implements Subsystem {
     // TODO pivot
-    private final TalonFX leftPivot;
-    private final TalonFX rightPivot;
+    // private final TalonFX leftPivot;
+    // private final TalonFX rightPivot;
 
     private final SparkFlex intakeMotor;
     private final RelativeEncoder intakeMotorEncoder;
@@ -27,13 +27,13 @@ public class IntakeSubsystem implements Subsystem {
         intakeMotor = new SparkFlex(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
         intakeMotorEncoder = intakeMotor.getEncoder();
 
-        leftPivot = new TalonFX(Ports.LEFT_INTAKE_PIVOT_CAN_ID);
-        rightPivot = new TalonFX(Ports.RIGHT_INTAKE_PIVOT_CAN_ID);
+        // leftPivot = new TalonFX(Ports.LEFT_INTAKE_PIVOT_CAN_ID);
+        // rightPivot = new TalonFX(Ports.RIGHT_INTAKE_PIVOT_CAN_ID);
     }
 
     public void setPivotSpeeds(double speed) {
-        leftPivot.set(speed);
-        rightPivot.set(speed);
+        // leftPivot.set(speed);
+        // rightPivot.set(speed);
     }
 
     public void startPivotUpwards() {

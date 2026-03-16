@@ -15,12 +15,12 @@ public class Constants {
         public static final int HOOD_COVER_CAN_ID = 20;
         public static final int LOWER_INTAKE_CAN_ID = 7;
         public static final int UPPER_INTAKE_CAN_ID = 17; 
-        public static final int ROLLER_CAN_ID = 2;
-        public static final int INTAKE_MOTOR_CAN_ID = 19;
+        public static final int ROLLER_CAN_ID = 21;
+        public static final int INTAKE_MOTOR_CAN_ID = 13;
 
         // talons
-        public static final int LEFT_INTAKE_PIVOT_CAN_ID = 24;
-        public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 14;
+        // public static final int LEFT_INTAKE_PIVOT_CAN_ID = 24;
+        // public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 14;
     }
 
     public static class NetworkTablesConstants {
