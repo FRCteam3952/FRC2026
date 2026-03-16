@@ -189,6 +189,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         this.yawController.setTolerance(0.03);
 
         this.yawController.enableContinuousInput(-Math.PI, Math.PI);
+
         configureAutoBuilder();
     }
 
@@ -253,6 +254,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.getStackTrace());
         }
     }
+
 
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.

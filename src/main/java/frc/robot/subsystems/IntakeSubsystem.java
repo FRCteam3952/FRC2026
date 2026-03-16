@@ -20,11 +20,11 @@ public class IntakeSubsystem implements Subsystem {
     // private final TalonFX leftPivot;
     // private final TalonFX rightPivot;
 
-    private final SparkFlex intakeMotor;
+    private final SparkMax intakeMotor;
     private final RelativeEncoder intakeMotorEncoder;
 
     public IntakeSubsystem() {
-        intakeMotor = new SparkFlex(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
+        intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
         intakeMotorEncoder = intakeMotor.getEncoder();
 
         // leftPivot = new TalonFX(Ports.LEFT_INTAKE_PIVOT_CAN_ID);
@@ -49,7 +49,7 @@ public class IntakeSubsystem implements Subsystem {
     }
 
     public void startLoadFuel() {
-        intakeMotor.set(0.4);
+        intakeMotor.set(0.45);
     }
 
     public void stopLoadFuel() {

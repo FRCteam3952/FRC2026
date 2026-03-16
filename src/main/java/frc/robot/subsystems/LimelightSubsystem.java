@@ -53,7 +53,8 @@ public class LimelightSubsystem extends SubsystemBase {
         for (String limelightName : limelightNames) {
             // Get the pose estimate
             // TODO: shouldn't be hardcoded blue i think
-            LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
+            // TODO: megatag2
+            LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
 
             // Didn't find a tag
             if (mt2.tagCount == 0) {

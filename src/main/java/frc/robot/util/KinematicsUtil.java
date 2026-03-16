@@ -17,8 +17,8 @@ public class KinematicsUtil {
         double hubRadius = 0.57;
         double ivanConstant = 0.15;
         double hubHeight = 1.5; // negating shooter hHeight
-        double hubX = FieldConstants.RED_HUB_CENTER_TRANSLATION.getX();
-        double hubY = FieldConstants.RED_HUB_CENTER_TRANSLATION.getY();
+        double hubX = FieldConstants.BLUE_HUB_CENTER_TRANSLATION.getX();
+        double hubY = FieldConstants.BLUE_HUB_CENTER_TRANSLATION.getY();
         
         double xDiff = xPos-hubX;
         double yDiff = yPos-hubY;

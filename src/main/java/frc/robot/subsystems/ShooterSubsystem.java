@@ -110,15 +110,15 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setFlywheelSpeed(LinearVelocity flywheelVelocity) {
         double fuelSpeed = flywheelVelocity.in(MetersPerSecond);
         double fuelSpeedToMotorOutput = 0.03131625;
-        double flywheelSpeedLossFactor = 3.5; // previously 1.3
+        double flywheelSpeedLossFactor = 4; // previously 1.3
 
         double motorOutput = fuelSpeed * fuelSpeedToMotorOutput * flywheelSpeedLossFactor;
-        // System.out.println("motorOutput: " + motorOutput);
-        setFlywheelSpeed(ControlUtils.clamp(0, motorOutput, 0.8));
+        System.out.println("motorOutput: " + motorOutput);
+        setFlywheelSpeed(ControlUtils.clamp(0, motorOutput, 1));
     }
 
     public void startLoadFuel() {
-        lowerIntakeMotor.set(0.0);
+        lowerIntakeMotor.set(0.6);
         roller.set(0.9);
         agitator.set(0.2);
         upperIntakeMotor.set(0.8);

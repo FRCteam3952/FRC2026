@@ -13,8 +13,8 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.utility.LinearPath;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.FollowPathCommand;
+// import com.pathplanner.lib.auto.AutoBuilder;
+// import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -79,15 +79,15 @@ public class RobotContainer {
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
 
-    private final SendableChooser<Command> autoChooser;
+    // private final SendableChooser<Command> autoChooser;?
 
     public RobotContainer() {
-        autoChooser = AutoBuilder.buildAutoChooser("Tests");
-        SmartDashboard.putData("Auto Choices", autoChooser);
-        Command simplePath = new FollowPathCommand(null, null, null, null, null, null, null, null)
-        autoChooser.setDefaultOption("1", simplePath);
-        autoChooser.addOption("Path 1", simplePath);
-        SmartDashboard.putData(autoChooser);
+        // autoChooser = AutoBuilder.buildAutoChooser("Tests");
+        // SmartDashboard.putData("Auto Choices", autoChooser);
+        // Command simplePath = PathPlannerPath.fromPathFile("FRC Auto");
+        // autoChooser.setDefaultOption("1", simplePath);
+        // autoChooser.addOption("Path 1", simplePath);
+        // SmartDashboard.putData(autoChooser);
         configureBindings();
         // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
@@ -112,7 +112,6 @@ public class RobotContainer {
         });
     
         followApriltagCommand = drivetrain.applyRequest(() -> {
-            // THE ROBOT WON'T WORK UNTIL WE SWTICH THIS LINE OF CODE BACK IN
             Pose2d botPose = drivetrain.getState().Pose;
             // Pose2d botPose = new Pose2d(13.9150, 4.0345, new Rotation2d(0));
 
@@ -180,8 +179,8 @@ public class RobotContainer {
         // joystick.povDown().onFalse(new InstantCommand(intake::stopPivot));
 
         // L1 to intake fuel
-        joystick.L1().onTrue(new InstantCommand(intake::startLoadFuel));
-        joystick.L1().onFalse(new InstantCommand(intake::stopLoadFuel));
+        // joystick.L1().onTrue(new InstantCommand(intake::startLoadFuel));
+        // joystick.L1().onFalse(new InstantCommand(intake::stopLoadFuel));
 
         // End of our code. Template code below:
         
