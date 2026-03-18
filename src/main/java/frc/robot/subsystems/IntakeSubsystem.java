@@ -13,19 +13,20 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Ports;
 
-public class IntakeSubsystem implements Subsystem {
+public class IntakeSubsystem extends SubsystemBase {
     // TODO pivot
     // private final TalonFX leftPivot;
     // private final TalonFX rightPivot;
 
-    private final SparkMax intakeMotor;
-    private final RelativeEncoder intakeMotorEncoder;
+    // private final SparkMax intakeMotor;
+    // private final RelativeEncoder intakeMotorEncoder;
 
     public IntakeSubsystem() {
-        intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
-        intakeMotorEncoder = intakeMotor.getEncoder();
+        // intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
+        // intakeMotorEncoder = intakeMotor.getEncoder();
 
         // leftPivot = new TalonFX(Ports.LEFT_INTAKE_PIVOT_CAN_ID);
         // rightPivot = new TalonFX(Ports.RIGHT_INTAKE_PIVOT_CAN_ID);
@@ -49,11 +50,11 @@ public class IntakeSubsystem implements Subsystem {
     }
 
     public void startLoadFuel() {
-        intakeMotor.set(0.45);
+        // intakeMotor.set(0.45);
     }
 
     public void stopLoadFuel() {
-        intakeMotor.set(0);
+        // intakeMotor.set(0);
     }
 
     @Override

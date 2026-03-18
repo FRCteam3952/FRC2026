@@ -118,9 +118,9 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        lowerIntakeMotor.set(0.6);
+        lowerIntakeMotor.set(0.8);
         roller.set(0.9);
-        agitator.set(0.2);
+        agitator.set(0.6);
         upperIntakeMotor.set(0.8);
     }
 

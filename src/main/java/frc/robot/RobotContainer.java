@@ -13,8 +13,10 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.utility.LinearPath;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-// import com.pathplanner.lib.auto.AutoBuilder;
-// import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -42,6 +44,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LimelightSubsystem;
@@ -76,20 +79,30 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final LimelightSubsystem limelights = new LimelightSubsystem(drivetrain);
     public final ShooterSubsystem shooter = new ShooterSubsystem();
+    public final ClimberSubsystem climber = new ClimberSubsystem();
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
 
-    // private final SendableChooser<Command> autoChooser;?
+    private final SendableChooser<Command> autoChooser;
 
     public RobotContainer() {
-        // autoChooser = AutoBuilder.buildAutoChooser("Tests");
-        // SmartDashboard.putData("Auto Choices", autoChooser);
-        // Command simplePath = PathPlannerPath.fromPathFile("FRC Auto");
-        // autoChooser.setDefaultOption("1", simplePath);
-        // autoChooser.addOption("Path 1", simplePath);
-        // SmartDashboard.putData(autoChooser);
+        autoChooser = AutoBuilder.buildAutoChooser("Test Path");
+        try {
+            PathPlannerPath testPath = PathPlannerPath.fromPathFile("Test Path");
+            PathPlannerAuto FRCAuto = new PathPlannerAuto("FRC Auto");
+            Command simplePath = AutoBuilder.followPath(testPath);
+            
+            autoChooser.setDefaultOption("Path 1", simplePath);
+            autoChooser.addOption("Path 1", simplePath);
+            autoChooser.addOption("FRC Auto", FRCAuto);
+        } catch (Exception e) {
+            DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
+        }
+        SmartDashboard.putData("Auto Choices 2026", autoChooser);
+
         configureBindings();
-        // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+
+        CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
 
     private void configureBindings() {
@@ -142,23 +155,45 @@ public class RobotContainer {
                 .withDeadband(0.1);
         });
 
-        // R2 to auto aim
-        joystick.R2().whileTrue(followApriltagCommand);
         drivetrain.setDefaultCommand(teleopDriveCommmand);        
-
-        // // L2 to shoot, (waits for flywheel to get up to speed)
-        joystick.L2().onTrue(new InstantCommand(() -> { shooterOn = true; })
+        
+        // R2 to auto aim,
+        joystick.R2().whileTrue(followApriltagCommand);
+        // then L2 to shoot, only during auto aim (waits for flywheel to get up to speed)
+        joystick.L2().onTrue(
+            new InstantCommand(() -> { 
+                if (joystick.R2().getAsBoolean() == true) {
+                    shooterOn = true;
+                } else {
+                    shooter.setFlywheelSpeed(0.6);
+                } 
+            })
             .andThen(new WaitCommand(0.5))
             .andThen(new InstantCommand(() -> {
                 if (joystick.L2().getAsBoolean() == true) {
                     shooter.startLoadFuel(); 
                 }
-            })));
-
+            }))
+        );
         joystick.L2().onFalse(new InstantCommand(() -> {
             shooterOn = false;
             shooter.stopLoadFuel();
         }));
+
+        // // Non-auto aim with cross
+        // joystick.cross().onTrue(
+        //     new InstantCommand(() -> { shooter.setFlywheelSpeed(0.6); })
+        //     .andThen(new WaitCommand(0.8))
+        //     .andThen(new InstantCommand(() -> {
+        //         if (joystick.cross().getAsBoolean() == true) {
+        //             shooter.startLoadFuel();
+        //         }
+        //     }))
+        // );
+        // joystick.cross().onFalse(new InstantCommand(() -> {
+        //     shooter.stopLoadFuel();
+        //     shooter.setFlywheelSpeed(0);
+        // }));
         
         // GUIDE TO MAKING THE ROBOT SHOOTER SETPOINT-CONTROLLED INSTEAD OF INCREMENTAL
         // 1. change these commands (optional)
@@ -191,7 +226,7 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
-        joystick.cross().whileTrue(drivetrain.applyRequest(() -> brake));
+        // joystick.cross().whileTrue(drivetrain.applyRequest(() -> brake));
         // joystick.circle().whileTrue(drivetrain.applyRequest(() ->
         //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         // ));
@@ -218,24 +253,26 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand() {
-        // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-            // Reset our field centric heading to match the robot
-            // facing away from our alliance station wall (0 deg).
-            drivetrain.runOnce(() -> {
-                System.out.println("Auto centered!");
-                drivetrain.seedFieldCentric(Rotation2d.kZero); // Does this account for which team we are? I guess it must
-            }),
-            // Then slowly drive forward (away from us) for 5 seconds.
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(0)//init 0.5
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
-            )
-            .withTimeout(5.0),
-            // Finally idle for the rest of auton
-            drivetrain.applyRequest(() -> idle)
-        );
+        return autoChooser.getSelected();
+
+        // // Simple drive forward auton
+        // final var idle = new SwerveRequest.Idle();
+        // return Commands.sequence(
+        //     // Reset our field centric heading to match the robot
+        //     // facing away from our alliance station wall (0 deg).
+        //     drivetrain.runOnce(() -> {
+        //         System.out.println("Auto centered!");
+        //         drivetrain.seedFieldCentric(Rotation2d.kZero); // Does this account for which team we are? I guess it must
+        //     }),
+        //     // Then slowly drive forward (away from us) for 5 seconds.
+        //     drivetrain.applyRequest(() ->
+        //         drive.withVelocityX(0)//init 0.5
+        //             .withVelocityY(0)
+        //             .withRotationalRate(0)
+        //     )
+        //     .withTimeout(5.0),
+        //     // Finally idle for the rest of auton
+        //     drivetrain.applyRequest(() -> idle)
+        // );
     }
 }

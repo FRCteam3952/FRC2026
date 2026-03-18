@@ -9,7 +9,7 @@ public class Constants {
         // spark flexes
         public static final int FLYWHEEL2_CAN_ID = 4; // switch if it goes backwards
         public static final int FLYWHEEL_CAN_ID = 3;
-        public static final int AGITATOR_CAN_ID = 0; 
+        public static final int AGITATOR_CAN_ID = 1; 
         
         // normal sparks
         public static final int HOOD_COVER_CAN_ID = 20;
@@ -21,6 +21,7 @@ public class Constants {
         // talons
         // public static final int LEFT_INTAKE_PIVOT_CAN_ID = 24;
         // public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 14;
+        public static final int CLIMBER_CAN_ID = 24;
     }
 
     public static class NetworkTablesConstants {
