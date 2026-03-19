@@ -228,11 +228,6 @@ public class RobotContainer {
         });
 
         climber.ifPresent(climber -> {
-            // joystick.create(); left weird button
-            // joystick.touchpad();
-            // joystick.PS();
-            // joystick.options(); right weird button
-
             // joystick.R1().onTrue(climber::toggleHopper);
         });
 
