@@ -7,41 +7,34 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.Optional;
-import java.util.ResourceBundle.Control;
+import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.utility.LinearPath;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathPlannerPath;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 // import edu.wpi.first.wpilibj2.command.button.;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.ClimberSubsystem;
@@ -53,7 +46,6 @@ import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.util.ControlUtils;
 import frc.robot.util.KinematicsUtil;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.NetworkTablesUtil;
 
 public class RobotContainer {
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -63,168 +55,190 @@ public class RobotContainer {
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    // private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+    // private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
     private Command teleopDriveCommmand;
     private Command followApriltagCommand;
-    private Command pointAndShootCommand;
     
-    // private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandPS5Controller joystick = new CommandPS5Controller(0);
     
-    public final IntakeSubsystem intake = new IntakeSubsystem();
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final LimelightSubsystem limelights = new LimelightSubsystem(drivetrain);
-    public final ShooterSubsystem shooter = new ShooterSubsystem();
-    public final ClimberSubsystem climber = new ClimberSubsystem();
+    public final Optional<IntakeSubsystem> intake;
+    public final Optional<CommandSwerveDrivetrain> drivetrain;
+    public final Optional<ShooterSubsystem> shooter;
+    public final Optional<ClimberSubsystem> climber;
+    public final Optional<LimelightSubsystem> limelights;
+
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
 
-    private final SendableChooser<Command> autoChooser;
+    // private SendableChooser<Command> autoChooser;
 
     public RobotContainer() {
-        autoChooser = AutoBuilder.buildAutoChooser("Test Path");
-        try {
-            PathPlannerPath testPath = PathPlannerPath.fromPathFile("Test Path");
-            PathPlannerAuto FRCAuto = new PathPlannerAuto("FRC Auto");
-            Command simplePath = AutoBuilder.followPath(testPath);
-            
-            autoChooser.setDefaultOption("Path 1", simplePath);
-            autoChooser.addOption("Path 1", simplePath);
-            autoChooser.addOption("FRC Auto", FRCAuto);
-        } catch (Exception e) {
-            DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
-        }
-        SmartDashboard.putData("Auto Choices 2026", autoChooser);
+        intake = initializeIfAttached(Flags.INTAKE_IS_ATTACHED, IntakeSubsystem::new);
+        drivetrain = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, TunerConstants::createDrivetrain);
+        shooter = initializeIfAttached(Flags.SHOOTER_IS_ATTACHED, ShooterSubsystem::new);
+        climber = initializeIfAttached(Flags.CLIMBER_IS_ATTACHED, ClimberSubsystem::new);
+        limelights = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, () -> new LimelightSubsystem(drivetrain.get()));
 
         configureBindings();
-
-        CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+        // configureAutoChooser();
+        configureNamedCommands();
     }
+
+    public void configureNamedCommands() {
+        ///NamedCommands.registerCommand("togglePivot", this.intake.togglePivot());
+    }
+
+    private static <T> Optional<T> initializeIfAttached(boolean subsystemAttached, Supplier<T> newSubsystem) {
+        if (subsystemAttached) {
+            return Optional.of(newSubsystem.get());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    // private void configureAutoChooser() {
+    //     autoChooser = AutoBuilder.buildAutoChooser("Test Path");
+    //     try {
+    //         PathPlannerPath testPath = PathPlannerPath.fromPathFile("Test Path");
+    //         PathPlannerAuto FRCAuto = new PathPlannerAuto("FRC Auto");
+    //         Command simplePath = AutoBuilder.followPath(testPath);
+            
+    //         autoChooser.setDefaultOption("Path 1", simplePath);
+    //         autoChooser.addOption("Path 1", simplePath);
+    //         autoChooser.addOption("FRC Auto", FRCAuto);
+    //     } catch (Exception e) {
+    //         DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
+    //     }
+    //     SmartDashboard.putData("Auto Choices 2026", autoChooser);
+
+    //     CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+    // }
 
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
-        // and Y is defined as to the left according to WPILib convention.
-
-        // Initialize limelights and drivetrain yaw for odometry
-        LimelightHelpers.SetIMUMode("limelight-a", 1);
-        LimelightHelpers.SetIMUMode("limelight-b", 1);
-        LimelightHelpers.SetIMUMode("limelight-c", 1);
-        limelights.updateMegaTag2RobotYaw();
-        drivetrain.initPID();
+        // and Y is defined as to the left according to WPILib convention
         pdp.setSwitchableChannel(true);
 
-        teleopDriveCommmand = drivetrain.applyRequest(() -> {
-            return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-                        .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
-                        .withRotationalRate(-joystick.getRightX()*MaxAngularRate) // Drive counterclockwise with negative X (left)
-                        .withDeadband(0.1);
+        drivetrain.ifPresent(drivetrain -> {
+            drivetrain.initPID();
+
+            teleopDriveCommmand = drivetrain.applyRequest(() -> {
+                return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                            .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+                            .withRotationalRate(-joystick.getRightX()*MaxAngularRate) // Drive counterclockwise with negative X (left)
+                            .withDeadband(0.1);
+            });
+        
+            followApriltagCommand = drivetrain.applyRequest(() -> {
+                Pose2d botPose = drivetrain.getState().Pose;
+                // Pose2d botPose = new Pose2d(13.9150, 4.0345, new Rotation2d(0));
+
+                ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
+                
+                // System.out.println("Follow Apriltag Command");
+                var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+                LinearVelocity flywheelVelocty = shooterState.getFirst();
+                Angle yawAngle = shooterState.getSecond().getFirst();
+                Angle hoodAngle = shooterState.getSecond().getSecond();
+                
+                shooter.ifPresent(shooter -> {
+                    // Auto aim shooter
+                    shooter.setHoodSetpoint(hoodAngle);
+                    if (shooterOn) {
+                        shooter.setFlywheelSpeed(flywheelVelocty);
+                    } else {
+                        shooter.setFlywheelSpeed(0);
+                    }
+                });
+                
+                // Drive teleop, auto aiming robot yaw towards hub
+                double rotationSpeedLimiter = 0.2;
+                double yawSpeed = drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
+                yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+
+                return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                    .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
+                    .withRotationalRate(yawSpeed * MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+                    .withDeadband(0.1);
+            });
+
+            drivetrain.setDefaultCommand(teleopDriveCommmand);
+        
+            // Idle while the robot is disabled. This ensures the configured
+            // neutral mode is applied to the drive motors while disabled.
+            final var idle = new SwerveRequest.Idle();
+            RobotModeTriggers.disabled().whileTrue(
+                drivetrain.applyRequest(() -> idle).ignoringDisable(true)
+            );
+            
+            joystick.PS().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+            drivetrain.registerTelemetry(logger::telemeterize);         
         });
-    
-        followApriltagCommand = drivetrain.applyRequest(() -> {
-            Pose2d botPose = drivetrain.getState().Pose;
-            // Pose2d botPose = new Pose2d(13.9150, 4.0345, new Rotation2d(0));
 
-            ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
-            
-            // System.out.println("Follow Apriltag Command");
-            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
-            LinearVelocity flywheelVelocty = shooterState.getFirst();
-            Angle yawAngle = shooterState.getSecond().getFirst();
-            Angle hoodAngle = shooterState.getSecond().getSecond();
-            
-            // Auto aim shooter
-            shooter.setHoodSetpoint(hoodAngle);
-            if (shooterOn) {
-                shooter.setFlywheelSpeed(flywheelVelocty);
-            } else {
-                shooter.setFlywheelSpeed(0);
-            }
-            
-            // Drive teleop, auto aiming robot yaw towards hub
-            double rotationSpeedLimiter = 0.2;
-            double yawSpeed = drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
-            yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+        shooter.ifPresent(shooter -> {
+            // cross to auto aim,
+            joystick.cross().whileTrue(followApriltagCommand);
+            // then R2 to shoot (waits for flywheel to get up to speed)
+            joystick.R2().onTrue(
+                new InstantCommand(() -> { 
+                    if (joystick.cross().getAsBoolean() == true) {
+                        shooterOn = true;
+                    } else {
+                        shooter.setFlywheelSpeed(0.6);
+                    } 
+                })
+                .andThen(new WaitCommand(0.5))
+                .andThen(new InstantCommand(() -> {
+                    if (joystick.R2().getAsBoolean() == true) {
+                        shooter.startLoadFuel(); 
+                    }
+                }))
+            );
+            joystick.R2().onFalse(new InstantCommand(() -> {
+                shooterOn = false;
+                shooter.stopLoadFuel();
+            }));
+        });
+        
+        intake.ifPresent(intake -> {
+            // Up and down arrows to move the pivot (replace with setpoint?)
+            joystick.L1().onTrue(new InstantCommand(intake::togglePivot));
+            // joystick.povUp().onTrue(new InstantCommand(intake::startPivotUpwards));
+            // joystick.povUp().onFalse(new InstantCommand(intake::stopPivot));
+            // joystick.povDown().onTrue(new InstantCommand(intake::startPivotDown));
+            // joystick.povDown().onFalse(new InstantCommand(intake::stopPivot));
 
-            return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-                .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
-                .withRotationalRate(yawSpeed * MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-                .withDeadband(0.1);
+            // toggle L1 to intake/not take fuel
+            joystick.L2().onTrue(new InstantCommand(intake::toggleIntake));
+        
+
+            // jiggle that thing while shooting
+            joystick.R2().whileTrue(new WaitCommand(2)
+                .andThen(new RepeatCommand(
+                    new InstantCommand(intake::setPivotMiddle)
+                    .andThen(new WaitCommand(0.3))
+                    .andThen(new InstantCommand(intake::setPivotDown))
+                    .andThen(new WaitCommand(0.3))
+            )));
+            joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));
         });
 
-        drivetrain.setDefaultCommand(teleopDriveCommmand);        
-        
-        // R2 to auto aim,
-        joystick.R2().whileTrue(followApriltagCommand);
-        // then L2 to shoot, only during auto aim (waits for flywheel to get up to speed)
-        joystick.L2().onTrue(
-            new InstantCommand(() -> { 
-                if (joystick.R2().getAsBoolean() == true) {
-                    shooterOn = true;
-                } else {
-                    shooter.setFlywheelSpeed(0.6);
-                } 
-            })
-            .andThen(new WaitCommand(0.5))
-            .andThen(new InstantCommand(() -> {
-                if (joystick.L2().getAsBoolean() == true) {
-                    shooter.startLoadFuel(); 
-                }
-            }))
-        );
-        joystick.L2().onFalse(new InstantCommand(() -> {
-            shooterOn = false;
-            shooter.stopLoadFuel();
-        }));
+        climber.ifPresent(climber -> {
+            // joystick.create(); left weird button
+            // joystick.touchpad();
+            // joystick.PS();
+            // joystick.options(); right weird button
 
-        // // Non-auto aim with cross
-        // joystick.cross().onTrue(
-        //     new InstantCommand(() -> { shooter.setFlywheelSpeed(0.6); })
-        //     .andThen(new WaitCommand(0.8))
-        //     .andThen(new InstantCommand(() -> {
-        //         if (joystick.cross().getAsBoolean() == true) {
-        //             shooter.startLoadFuel();
-        //         }
-        //     }))
-        // );
-        // joystick.cross().onFalse(new InstantCommand(() -> {
-        //     shooter.stopLoadFuel();
-        //     shooter.setFlywheelSpeed(0);
-        // }));
-        
-        // GUIDE TO MAKING THE ROBOT SHOOTER SETPOINT-CONTROLLED INSTEAD OF INCREMENTAL
-        // 1. change these commands (optional)
-        // 2. change the periodic method of the shooter to call the PID thing command (commented out Rn)
-        // joystick.povUp().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(1.0)));
-        // joystick.povDown().onTrue(new InstantCommand(() -> shooter.setHoodSetPoint(0.0)));
-        // TODO: intake pivot / 27979
-        // joystick.povUp().onTrue(new InstantCommand(intake));
-        // joystick.povDown().onTrue(new InstantCommand(shooter::lowerFuelHood));
-        // joystick.povUp().onFalse(new InstantCommand(shooter::stopFuelHood));
-        // joystick.povDown().onFalse(new InstantCommand(shooter::stopFuelHood));
+            // joystick.R1().onTrue(climber::toggleHopper);
+        });
 
-
-        // disabled for now while tim's thing is attached to it.
-        // joystick.povUp().onTrue(new InstantCommand(intake::startPivotUpwards));
-        // joystick.povDown().onTrue(new InstantCommand(intake::startPivotDown));
-        // joystick.povUp().onFalse(new InstantCommand(intake::stopPivot));
-        // joystick.povDown().onFalse(new InstantCommand(intake::stopPivot));
-
-        // L1 to intake fuel
-        // joystick.L1().onTrue(new InstantCommand(intake::startLoadFuel));
-        // joystick.L1().onFalse(new InstantCommand(intake::stopLoadFuel));
-
-        // End of our code. Template code below:
-        
-        // Idle while the robot is disabled. This ensures the configured
-        // neutral mode is applied to the drive motors while disabled.
-        final var idle = new SwerveRequest.Idle();
-        RobotModeTriggers.disabled().whileTrue(
-            drivetrain.applyRequest(() -> idle).ignoringDisable(true)
-        );
+        // ------------------------------------------------------------------------------------------------------
+        //                           End of our code. Template code below:
+        // ------------------------------------------------------------------------------------------------------
 
         // joystick.cross().whileTrue(drivetrain.applyRequest(() -> brake));
         // joystick.circle().whileTrue(drivetrain.applyRequest(() ->
@@ -237,24 +251,17 @@ public class RobotContainer {
         // joystick.back().and(joystick.square()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         // joystick.start().and(joystick.triangle()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         // joystick.start().and(joystick.square()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-        // Reset the field-centric heading on left bumper press.
-        // Note: For some reason this doesn't work for us? 
-        joystick.L1().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-
-        // Fix for gyro starting backwards problem, hopefully
-        // if (DriverStation.getAlliance().equals(Optional.of(Alliance.Red))) {
-        //     drivetrain.seedFieldCentric(Rotation2d.k180deg);
-        // } else {
-        //     drivetrain.seedFieldCentric(Rotation2d.kZero);
-        // }
-
-        drivetrain.registerTelemetry(logger::telemeterize);
     }
     
     public Command getAutonomousCommand() {
-        return autoChooser.getSelected();
+        // return autoChooser.getSelected();
+        return null;
 
+        // ------------------------------------------------------------------------------------------------------
+        //                           End of our code. Template code below:
+        // ------------------------------------------------------------------------------------------------------
+        
+        // TODO: remove this template code once real autons work.
         // // Simple drive forward auton
         // final var idle = new SwerveRequest.Idle();
         // return Commands.sequence(

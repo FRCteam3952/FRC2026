@@ -1,7 +1,5 @@
 package frc.robot.util;
 
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-
 public class ControlUtils {
     public static double clamp(double input) {
         if (input > 1.0) {
