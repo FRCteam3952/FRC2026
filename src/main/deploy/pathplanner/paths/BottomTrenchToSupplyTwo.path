@@ -1,0 +1,70 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.509,
+        "y": 0.686
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 6.2667336309523805,
+        "y": 0.7201488095238096
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.787127976190476,
+        "y": 3.535
+      },
+      "prevControl": {
+        "x": 7.787127976190476,
+        "y": -0.028822224407405006
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.26977687626774877,
+      "rotationDegrees": -0.03241335797258339
+    },
+    {
+      "waypointRelativePos": 0.7646396396396412,
+      "rotationDegrees": -104.23482153599464
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "Pick balls up",
+      "waypointRelativePos": 0.8164383561643845,
+      "endWaypointRelativePos": 1.0,
+      "command": null
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -90.0
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -0.5013338505944093
+  },
+  "useDefaultConstraints": true
+}

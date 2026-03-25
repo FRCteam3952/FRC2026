@@ -11,6 +11,9 @@ import java.util.ResourceBundle.Control;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.utility.LinearPath;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 // import com.pathplanner.lib.auto.AutoBuilder;
@@ -79,17 +82,17 @@ public class RobotContainer {
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
 
-    // private final SendableChooser<Command> autoChooser;?
+    private final SendableChooser<Command> autoChooser;
 
     public RobotContainer() {
-        // autoChooser = AutoBuilder.buildAutoChooser("Tests");
-        // SmartDashboard.putData("Auto Choices", autoChooser);
-        // Command simplePath = PathPlannerPath.fromPathFile("FRC Auto");
-        // autoChooser.setDefaultOption("1", simplePath);
-        // autoChooser.addOption("Path 1", simplePath);
-        // SmartDashboard.putData(autoChooser);
+        autoChooser = AutoBuilder.buildAutoChooser("Tests");
+        SmartDashboard.putData("Auto Choices", autoChooser);
+        PathPlannerPath path = PathPlannerPath.fromPathFile("FRC Auto");
+        Command simplePath = AutoBuilder.followPath(path);
+        autoChooser.setDefaultOption("1", simplePath);
+        autoChooser.addOption("Path 1", simplePath);
         configureBindings();
-        // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+        CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
 
     private void configureBindings() {
