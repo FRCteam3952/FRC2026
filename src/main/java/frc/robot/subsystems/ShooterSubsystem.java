@@ -3,23 +3,14 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
-import java.util.Optional;
-
 import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkBaseConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Ports;
@@ -81,7 +72,7 @@ public class ShooterSubsystem extends SubsystemBase {
         hoodCover.set(0);
     }
 
-    public void setHoodSetPoint(double setPoint) {
+    public void setHoodSetpoint(double setPoint) {
         hoodPositionController.setSetpoint(setPoint);
     }
 
@@ -89,7 +80,7 @@ public class ShooterSubsystem extends SubsystemBase {
         double degreesFromVertical = 90 - angleFromHorizontal.in(Degrees); 
         double shooterRange = Constants.RobotConstants.maxShooterAngle - Constants.RobotConstants.minShooterAngle;
         double setpoint = (degreesFromVertical - Constants.RobotConstants.minShooterAngle) / shooterRange;
-        setHoodSetPoint(setpoint);
+        setHoodSetpoint(setpoint);
     }
 
     public double getHoodPosition() {
@@ -118,9 +109,9 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        lowerIntakeMotor.set(0.6);
+        lowerIntakeMotor.set(0.8);
         roller.set(0.9);
-        agitator.set(0.2);
+        agitator.set(0.6);
         upperIntakeMotor.set(0.8);
     }
 

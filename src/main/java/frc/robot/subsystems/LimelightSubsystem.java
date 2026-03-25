@@ -2,21 +2,10 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 
-import java.util.Optional;
-
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
-import frc.robot.Constants.Ports;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.NetworkTablesUtil;
 
 public class LimelightSubsystem extends SubsystemBase {
     private final double delayBetweenLimelightReadings = 0.020; // 20 ms
@@ -31,6 +20,12 @@ public class LimelightSubsystem extends SubsystemBase {
 
     public LimelightSubsystem(CommandSwerveDrivetrain drivetrain) {
         this.drivetrain = drivetrain;
+
+        // Initialize limelights and drivetrain yaw for odometry
+        LimelightHelpers.SetIMUMode("limelight-a", 1);
+        LimelightHelpers.SetIMUMode("limelight-b", 1);
+        LimelightHelpers.SetIMUMode("limelight-c", 1);
+        updateMegaTag2RobotYaw();
     }
 
     @Override
