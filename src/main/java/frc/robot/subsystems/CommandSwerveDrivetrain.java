@@ -232,6 +232,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 () -> getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
                 (speeds, feedforwards) -> setControl(
+                    // if (RobotContainer.autonAutoAiming == true) {
+                    //     speeds.setOmega(calculateYawSpeed(getState().Pose.getRotation().getRadians(), FieldConstants.RED_HUB_CENTER_TRANSLATION.minus(getState().Pose.getTranslation()).getAngle().getRadians()));
+                    // }
                     m_pathApplyRobotSpeeds.withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
                         .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                         .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())

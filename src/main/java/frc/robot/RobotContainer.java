@@ -73,6 +73,7 @@ public class RobotContainer {
 
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     private boolean shooterOn = false;
+    public boolean autonAutoAiming = false;
 
     // private SendableChooser<Command> autoChooser;
 
@@ -181,11 +182,12 @@ public class RobotContainer {
 
         shooter.ifPresent(shooter -> {
             // cross to auto aim,
-            joystick.cross().whileTrue(followApriltagCommand);
+            // joystick.R1().whileFalse(followApriltagCommand);
+            joystick.R2().and(joystick.R1().negate()).whileTrue(followApriltagCommand);
             // then R2 to shoot (waits for flywheel to get up to speed)
             joystick.R2().onTrue(
                 new InstantCommand(() -> { 
-                    if (joystick.cross().getAsBoolean() == true) {
+                    if (joystick.R1().getAsBoolean() == false) {
                         shooterOn = true;
                     } else {
                         shooter.setFlywheelSpeed(0.6);
@@ -213,15 +215,15 @@ public class RobotContainer {
             // joystick.povDown().onFalse(new InstantCommand(intake::stopPivot));
 
             // toggle L1 to intake/not take fuel
-            joystick.L2().onTrue(new InstantCommand(intake::toggleIntake));
-        
+            joystick.L2().onTrue(new InstantCommand(intake::startLoadFuel));
+            joystick.L2().onFalse(new InstantCommand(intake::stopLoadFuel));
 
             // jiggle that thing while shooting
             joystick.R2().whileTrue(new WaitCommand(2)
                 .andThen(new RepeatCommand(
                     new InstantCommand(intake::setPivotMiddle)
                     .andThen(new WaitCommand(0.3))
-                    .andThen(new InstantCommand(intake::setPivotDown))
+                    .andThen(new InstantCommand(intake::setPivotJiggle))
                     .andThen(new WaitCommand(0.3))
             )));
             joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));

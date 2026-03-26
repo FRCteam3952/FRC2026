@@ -21,20 +21,21 @@ public class IntakeSubsystem extends SubsystemBase {
     private final PIDController rightPivotPID = new PIDController(2, 0, 0);
     // private final PIDController leftPivotPID = new PIDController(0.5, 0, 0);
 
-    // private final SparkMax intakeMotor;
+    private final SparkMax intakeMotor;
 
     private final AbsoluteEncoder rightAbsoluteEncoder;
     // private final RelativeEncoder leftEncoder;
 
-    private final double downPivotPos = 0.8545;
-    private final double middlePivotPos = 0.5872;
-    private final double upPivotPos = 0.4301;
+    private final double downPivotPos = 0.2530;
+    private final double jigglePivotPos = 0.4000;
+    private final double middlePivotPos = 0.5640;
+    private final double upPivotPos = 0.7680;
 
     // private final double leftEncoderRange = 7.5;
     // private final double rightEncoderRange = upPivotPos - downPivotPos;
 
     public IntakeSubsystem() {
-        // intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
+        intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
 
         // leftPivot = new SparkMax(Ports.LEFT_INTAKE_PIVOT_CAN_ID, MotorType.kBrushless);
         rightPivot = new SparkMax(Ports.RIGHT_INTAKE_PIVOT_CAN_ID, MotorType.kBrushless);
@@ -72,19 +73,19 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        // intakeMotor.set(0.35);
+        intakeMotor.set(0.35);
     }
 
     public void stopLoadFuel() {
-        // intakeMotor.set(0);
+        intakeMotor.set(0);
     }
 
     public void toggleIntake() {
-        // if (intakeMotor.get() == 0) {
-        //     startLoadFuel();
-        // } else {
-        //     stopLoadFuel();
-        // }
+        if (intakeMotor.get() == 0) {
+            startLoadFuel();
+        } else {
+            stopLoadFuel();
+        }
     }
 
     public void runPivotPID() {
@@ -120,6 +121,10 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void setPivotMiddle() {
         setSetpoint(middlePivotPos);
+    }
+
+    public void setPivotJiggle() {
+        setSetpoint(jigglePivotPos);
     }
 
     @Override
