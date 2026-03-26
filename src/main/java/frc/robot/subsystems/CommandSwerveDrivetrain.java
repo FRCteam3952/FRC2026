@@ -23,15 +23,21 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.RobotContainer;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.util.ControlUtils;
+import frc.robot.util.KinematicsUtil;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -41,8 +47,8 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
  * https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/tuner-swerve/index.html
  */
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
-    // private double expectedX = 7.3968;
-    // private double expectedY = 0;
+
+    public boolean autoAimAlongPath = false;
 
     private PIDController yController = new PIDController(4.0, 0.0, 0);
     private PIDController xController = new PIDController(4.0, 0.0, 0);
@@ -223,6 +229,26 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         configureAutoBuilder();
     }
 
+    public Command getAutoAimAlongPathCommand() {
+        return Commands.runOnce(() -> { autoAimAlongPath = true; })
+                     .finallyDo(() -> { autoAimAlongPath = false; });
+    }
+
+    public double getAutoAimYawSpeed() {
+        // SAME AS FollowApriltagCommand
+        Pose2d botPose = this.getState().Pose;
+        ChassisSpeeds currentSpeed = this.getState().Speeds;
+        
+        var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+        Angle yawAngle = shooterState.getSecond().getFirst();
+        
+        double rotationSpeedLimiter = 0.2;
+        double yawSpeed = this.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
+        yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+
+        return yawSpeed * RobotContainer.MaxAngularRate; // * MaxAngularRate?
+    }
+
     private void configureAutoBuilder() {
         try {
             var config = RobotConfig.fromGUISettings();
@@ -231,11 +257,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                (speeds, feedforwards) -> setControl(
-                    m_pathApplyRobotSpeeds.withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
-                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                ),
+                (speeds, feedforwards) -> {
+                    // This `if` statement is our only change to the CTRE template code:
+                    if (autoAimAlongPath) {
+                        speeds.omegaRadiansPerSecond = getAutoAimYawSpeed();
+                    }
+                    setControl(
+                        m_pathApplyRobotSpeeds.withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
+                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                    );
+                },
                 new PPHolonomicDriveController(
                     // PID constants for translation
                     new PIDConstants(0.1, 0, 0),

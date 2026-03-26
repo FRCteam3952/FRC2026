@@ -18,7 +18,7 @@ import frc.robot.util.ControlUtils;
 
 public class ShooterSubsystem extends SubsystemBase {
     private final SparkMax lowerIntakeMotor;
-    private final SparkFlex roller;
+    public final SparkMax roller;
     private final SparkFlex agitator;
     private final SparkMax flywheel;
     private final SparkMax flywheel2;
@@ -34,7 +34,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public ShooterSubsystem() {
         lowerIntakeMotor = new SparkMax(Ports.LOWER_INTAKE_CAN_ID, MotorType.kBrushless);
-        roller = new SparkFlex(Ports.ROLLER_CAN_ID, MotorType.kBrushless);
+        roller = new SparkMax(Ports.ROLLER_CAN_ID, MotorType.kBrushless);
         agitator = new SparkFlex(Ports.AGITATOR_CAN_ID, MotorType.kBrushless);
         flywheel = new SparkMax(Ports.FLYWHEEL_CAN_ID, MotorType.kBrushless);
         flywheel2 = new SparkMax(Ports.FLYWHEEL2_CAN_ID, MotorType.kBrushless);

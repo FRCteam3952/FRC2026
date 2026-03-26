@@ -10,6 +10,8 @@ import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.RobotConstants;
@@ -21,20 +23,21 @@ public class IntakeSubsystem extends SubsystemBase {
     private final PIDController rightPivotPID = new PIDController(2, 0, 0);
     // private final PIDController leftPivotPID = new PIDController(0.5, 0, 0);
 
-    // private final SparkMax intakeMotor;
+    private final SparkMax intakeMotor;
 
     private final AbsoluteEncoder rightAbsoluteEncoder;
     // private final RelativeEncoder leftEncoder;
 
-    private final double downPivotPos = 0.8545;
-    private final double middlePivotPos = 0.5872;
-    private final double upPivotPos = 0.4301;
+    private final double downPivotPos = 0.2780;
+    private final double middlePivotPos = 0.5300; // jiggle up
+    private final double jigglePivotPos = 0.3873; 
+    private final double upPivotPos = 0.7815;
 
     // private final double leftEncoderRange = 7.5;
     // private final double rightEncoderRange = upPivotPos - downPivotPos;
 
     public IntakeSubsystem() {
-        // intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
+        intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
 
         // leftPivot = new SparkMax(Ports.LEFT_INTAKE_PIVOT_CAN_ID, MotorType.kBrushless);
         rightPivot = new SparkMax(Ports.RIGHT_INTAKE_PIVOT_CAN_ID, MotorType.kBrushless);
@@ -58,8 +61,32 @@ public class IntakeSubsystem extends SubsystemBase {
     //     return leftEncoder.getPosition() / leftEncoderRange * rightEncoderRange + downPivotPos;
     // }
 
+    public Command getRunIntakeCommand() {
+        Command noninteruptible = Commands.run(this::startLoadFuel, this);
+        return noninteruptible;
+    }
+
+    public Command getLowerIntakeCommand() {
+        Command noninteruptible = Commands.run(()-> {
+            this.setSetpoint(downPivotPos);
+        }, this);        
+        return noninteruptible;
+    }
+
     public double getNormalizedRightPosition() {
         return rightAbsoluteEncoder.getPosition();
+    }
+
+    public void pivotTowardPositive() {
+        this.rightPivot.set(0.2);
+    }
+    
+    public void pivotTowardNegative() {
+        this.rightPivot.set(-0.2);
+    }
+    
+    public void pivotStop() {
+        this.rightPivot.set(-0.0);
     }
 
     public void setPivotSpeeds(double speed) {
@@ -72,19 +99,19 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        // intakeMotor.set(0.35);
+        intakeMotor.set(0.35);
     }
 
     public void stopLoadFuel() {
-        // intakeMotor.set(0);
+        intakeMotor.set(0);
     }
 
     public void toggleIntake() {
-        // if (intakeMotor.get() == 0) {
-        //     startLoadFuel();
-        // } else {
-        //     stopLoadFuel();
-        // }
+        if (intakeMotor.get() == 0) {
+            startLoadFuel();
+        } else {
+            stopLoadFuel();
+        }
     }
 
     public void runPivotPID() {
@@ -122,10 +149,15 @@ public class IntakeSubsystem extends SubsystemBase {
         setSetpoint(middlePivotPos);
     }
 
+    public void setPivotJiggle() {
+        setSetpoint(jigglePivotPos);
+    }
+
     @Override
     public void periodic() {
         runPivotPID();
+        
         System.out.println("right =" + getNormalizedRightPosition());
-        // System.out.println("left = " + getNormalizedLeftPosition());
+        //System.out.println("left = " + getNormalizedLeftPosition());
     }
 }
