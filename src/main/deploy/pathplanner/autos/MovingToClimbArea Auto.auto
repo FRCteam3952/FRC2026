@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "SimpleStartingLineToSupply"
+            "pathName": "StartingLineToBottomTrench"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "Pick balls up"
+            "pathName": "ShootBallsWhileMovingToClimb"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "MoveToClimb"
           }
         }
       ]

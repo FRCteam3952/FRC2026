@@ -28,10 +28,10 @@ public class IntakeSubsystem extends SubsystemBase {
     private final AbsoluteEncoder rightAbsoluteEncoder;
     // private final RelativeEncoder leftEncoder;
 
-    private final double downPivotPos = 0.2780;
-    private final double middlePivotPos = 0.5300; // jiggle up
-    private final double jigglePivotPos = 0.3873; 
-    private final double upPivotPos = 0.7815;
+    private final double downPivotPos = 0.2530;
+    private final double jigglePivotPos = 0.4000;
+    private final double middlePivotPos = 0.5640;
+    private final double upPivotPos = 0.7680;
 
     // private final double leftEncoderRange = 7.5;
     // private final double rightEncoderRange = upPivotPos - downPivotPos;

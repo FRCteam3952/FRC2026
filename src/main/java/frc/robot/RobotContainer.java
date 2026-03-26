@@ -224,6 +224,7 @@ public class RobotContainer {
                     new InstantCommand(intake::setPivotMiddle)
                     .andThen(new WaitCommand(0.3))
                     .andThen(new InstantCommand(intake::setPivotJiggle))
+                    .andThen(new InstantCommand(intake::setPivotJiggle))
                     .andThen(new WaitCommand(0.3))
             )));
             joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));
