@@ -7,6 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -29,6 +30,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -88,7 +90,24 @@ public class RobotContainer {
     }
 
     public void configureNamedCommands() {
-        ///NamedCommands.registerCommand("togglePivot", this.intake.togglePivot());
+        // NamedCommands.registerCommand("togglePivot", this.intake.togglePivot());
+        // NamedCommands.registerCommand("movePivotDown", 
+        //     initializeCommandIfAttached(intake, intake -> this.intake.togglePivot()));
+        registerIfAttached("setPivotDown", intake, intake -> new InstantCommand(intake::setPivotDown));
+        registerIfAttached("setPivotUp", intake, intake -> new InstantCommand(intake::setPivotUp));
+        registerIfAttached("intakeOn", intake, intake -> new InstantCommand(intake::startLoadFuel));
+        registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
+
+        registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
+        
+    }   
+
+    private static <T> void registerIfAttached(String name, Optional<T> arg, Function<T, Command> getCommand) {
+        if (arg.isPresent()) {
+            NamedCommands.registerCommand(name, getCommand.apply(arg.get()));
+        } else {
+            NamedCommands.registerCommand(name, new InstantCommand());
+        }
     }
 
     private static <T> Optional<T> initializeIfAttached(boolean subsystemAttached, Supplier<T> newSubsystem) {
@@ -97,6 +116,34 @@ public class RobotContainer {
         } else {
             return Optional.empty();
         }
+    }
+
+    public Command getStopAndShootCommand(CommandSwerveDrivetrain d) {
+        return d.applyRequest(() -> {
+            Pose2d botPose = d.getState().Pose;
+            ChassisSpeeds currentSpeed = d.getState().Speeds;
+            
+            // System.out.println("Follow Apriltag Command");
+            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            LinearVelocity flywheelVelocity = shooterState.getFirst();
+            Angle yawAngle = shooterState.getSecond().getFirst();
+            Angle hoodAngle = shooterState.getSecond().getSecond();
+            
+            // Auto aim shooter
+            shooter.ifPresent(shooter -> {
+                shooter.setHoodSetpoint(hoodAngle);
+                shooter.setFlywheelSpeed(flywheelVelocity);
+            });
+            
+            // Drive teleop, auto aiming robot yaw towards hub
+            double rotationSpeedLimiter = 0.2;
+            double yawSpeed = d.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
+            yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+
+            return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
+                .withVelocityY(0)// Drive left with negative X (left) (MaxSpeed)
+                .withRotationalRate(yawSpeed * MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
+        });
     }
 
     // private void configureAutoChooser() {

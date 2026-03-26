@@ -61,17 +61,25 @@ public class IntakeSubsystem extends SubsystemBase {
     //     return leftEncoder.getPosition() / leftEncoderRange * rightEncoderRange + downPivotPos;
     // }
 
-    public Command getRunIntakeCommand() {
-        Command noninteruptible = Commands.run(this::startLoadFuel, this);
-        return noninteruptible;
-    }
+    // public Command getRunIntakeCommand() {
+    //     Command noninterruptible = Commands.run(this::startLoadFuel, this);
+    //     return noninterruptible;
+    // }
 
-    public Command getLowerIntakeCommand() {
-        Command noninteruptible = Commands.run(()-> {
-            this.setSetpoint(downPivotPos);
-        }, this);        
-        return noninteruptible;
-    }
+    // public Command getStopIntakeCommand() {
+    //     Command noninterruptible = Commands.run(this::stopLoadFuel, this);
+    //     return noninterruptible;
+    // }
+
+    // public Command getLowerIntakeCommand() {
+    //     Command noninterruptible = Commands.run(this::setPivotDown, this);        
+    //     return noninterruptible;
+    // }
+
+    // public Command getRaiseIntakeCommand() {
+    //     Command noninterruptible = Commands.run(this::setPivotUp, this);
+    //     return noninterruptible;
+    // }
 
     public double getNormalizedRightPosition() {
         return rightAbsoluteEncoder.getPosition();
