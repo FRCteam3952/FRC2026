@@ -99,7 +99,23 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        
+        registerIfAttached("shooterOn", shooter, shooter -> new InstantCommand(() -> {
+            Pose2d botPose = getBotPose();
+            ChassisSpeeds currentSpeed = getBotSpeeds();
+
+            // System.out.println("Follow Apriltag Command");
+            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            LinearVelocity flywheelVelocity = shooterState.getFirst();
+            Angle yawAngle = shooterState.getSecond().getFirst();
+            Angle hoodAngle = shooterState.getSecond().getSecond();
+            
+            // Auto aim shooter
+            shooter.setHoodSetpoint(hoodAngle);
+            shooter.setFlywheelSpeed(flywheelVelocity);
+        }));
+        registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
+        registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
+        registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
     }   
 
     private static <T> void registerIfAttached(String name, Optional<T> arg, Function<T, Command> getCommand) {
@@ -116,6 +132,14 @@ public class RobotContainer {
         } else {
             return Optional.empty();
         }
+    }
+
+    public Pose2d getBotPose() {
+        return drivetrain.map(d -> d.getState().Pose).orElse(new Pose2d());
+    }
+
+    public ChassisSpeeds getBotSpeeds() {
+        return drivetrain.map(d -> d.getState().Speeds).orElse(new ChassisSpeeds());
     }
 
     public Command getStopAndShootCommand(CommandSwerveDrivetrain d) {
