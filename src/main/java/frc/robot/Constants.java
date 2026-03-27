@@ -1,5 +1,5 @@
 package frc.robot;
-
+// luca lopez class of 2026 did all of this and is software king
 import edu.wpi.first.math.geometry.Translation2d;
 
 public class Constants {

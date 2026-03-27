@@ -74,6 +74,7 @@ public class RobotContainer {
     public final Optional<LimelightSubsystem> limelights;
 
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
+    public SendableChooser<Command> autoChooser;
 
     private boolean shooterOn = false;
 
@@ -85,7 +86,7 @@ public class RobotContainer {
         limelights = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, () -> new LimelightSubsystem(drivetrain.get()));
 
         configureBindings();
-        // configureAutoChooser();
+        configureAutoChooser();
         configureNamedCommands();
     }
 
@@ -99,7 +100,7 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        
+
     }   
 
     private static <T> void registerIfAttached(String name, Optional<T> arg, Function<T, Command> getCommand) {
@@ -146,22 +147,22 @@ public class RobotContainer {
         });
     }
 
-    // private void configureAutoChooser() {
-    //     autoChooser = AutoBuilder.buildAutoChooser("Test Path");
-    //     try {
-    //         PathPlannerPath testPath = PathPlannerPath.fromPathFile("Test Path");
-    //         PathPlannerAuto FRCAuto = new PathPlannerAuto("FRC Auto");
-    //         Command simplePath = AutoBuilder.followPath(testPath);
+    private void configureAutoChooser() {
+        autoChooser = AutoBuilder.buildAutoChooser("Test Path");
+        try {
+            PathPlannerPath testPath = PathPlannerPath.fromPathFile("Test Path");
+            PathPlannerAuto FRCAuto = new PathPlannerAuto("FRC Auto");
+            Command simplePath = AutoBuilder.followPath(testPath);
             
-    //         autoChooser.setDefaultOption("Path 1", simplePath);
-    //         autoChooser.addOption("Path 1", simplePath);
-    //         autoChooser.addOption("FRC Auto", FRCAuto);
-    //     } catch (Exception e) {
-    //         DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
-    //     }
-    //     SmartDashboard.putData("Auto Choices 2026", autoChooser);
-    //     CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
-    // }
+            autoChooser.setDefaultOption("Path 1", simplePath);
+            autoChooser.addOption("Path 1", simplePath);
+            autoChooser.addOption("FRC Auto", FRCAuto);
+        } catch (Exception e) {
+            DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
+        }
+        SmartDashboard.putData("Auto Choices 2026", autoChooser);
+        CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+    }
 
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
@@ -171,6 +172,8 @@ public class RobotContainer {
         drivetrain.ifPresent(drivetrain -> {
             drivetrain.initPID();
 
+            joystick.PS().onTrue(new InstantCommand(() -> drivetrain.seedFieldCentric()));
+
             teleopDriveCommand = drivetrain.applyRequest(() -> {
                 return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
                             .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
@@ -179,6 +182,7 @@ public class RobotContainer {
             });
 
             followApriltagCommand = drivetrain.applyRequest(() -> {
+                System.out.println("follow apriltag command");
                 Pose2d botPose = drivetrain.getState().Pose;
                 ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
                 
@@ -197,6 +201,8 @@ public class RobotContainer {
                         shooter.setFlywheelSpeed(0);
                     }
                 });
+
+                System.out.println("Yaw should be: " + yawAngle);
                 
                 // Drive teleop, auto aiming robot yaw towards hub
                 double rotationSpeedLimiter = 0.2;
@@ -228,7 +234,7 @@ public class RobotContainer {
             joystick.R2().and(joystick.R1().negate()).whileTrue(followApriltagCommand);
             // }
             // then R2 to shoot (waits for flywheel to get up to speed)
-            joystick.R2().whileTrue(
+            joystick.R2().onTrue(
                 new InstantCommand(() -> {
                     // TODO: do we alwayd auto aim now?
                     if (joystick.R1().getAsBoolean() == true) {
@@ -238,7 +244,11 @@ public class RobotContainer {
                     } 
                 })
                 .andThen(new WaitCommand(0.5))
-                .andThen(new InstantCommand(shooter::startLoadFuel))
+                .andThen(new InstantCommand(() -> {
+                    if (joystick.R2().getAsBoolean() == true) {
+                        shooter.startLoadFuel();
+                    }
+                }))
             );
             joystick.R2().onFalse(new InstantCommand(() -> {
                 shooterOn = false;
@@ -269,14 +279,14 @@ public class RobotContainer {
             joystick.R2().whileTrue(new WaitCommand(2)
                 .andThen(new RepeatCommand(
                     new InstantCommand(intake::setPivotMiddle)
-                    .andThen(new WaitCommand(0.3))
+                    .andThen(new WaitCommand(0.2))
                     .andThen(new InstantCommand(intake::setPivotJiggle))
                     .andThen(new InstantCommand(intake::setPivotJiggle))
-                    .andThen(new WaitCommand(0.3))
+                    .andThen(new WaitCommand(0.2))
             )));
             joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));
         });
-
+            // luca did ALL of this ^^^
         climber.ifPresent(climber -> {
             // joystick.create(); left weird button
             // joystick.touchpad();

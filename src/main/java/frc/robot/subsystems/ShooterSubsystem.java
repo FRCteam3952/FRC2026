@@ -129,6 +129,5 @@ public class ShooterSubsystem extends SubsystemBase {
         // Check to see if the limit switch has been triggered
         // System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
         runHoodPositionPID();
-        System.out.println("hood = " + hoodCoverAbsoluteEncoder.getPosition());
     }
 }
