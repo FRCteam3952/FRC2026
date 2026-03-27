@@ -29,7 +29,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private final AbsoluteEncoder hoodCoverAbsoluteEncoder;
     private final double hoodZeroPosition = 0.1448;
     private final double hoodOnePosition = 0.0483;
-    private final double hoodPositionRange = 1 - hoodZeroPosition + hoodOnePosition;
+    private final double hoodPositionRange = -hoodZeroPosition + hoodOnePosition;
 
     private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
 
