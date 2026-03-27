@@ -99,7 +99,7 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        registerIfAttached("shooterOn", shooter, shooter -> new InstantCommand(() -> {
+        registerIfAttached("shooterOn", shooter, shooter -> Commands.run(() -> {
             Pose2d botPose = getBotPose();
             ChassisSpeeds currentSpeed = getBotSpeeds();
 
@@ -112,7 +112,8 @@ public class RobotContainer {
             // Auto aim shooter
             shooter.setHoodSetpoint(hoodAngle);
             shooter.setFlywheelSpeed(flywheelVelocity);
-        }));
+        }, shooter).finallyDo(shooter::stopFlywheel)
+        );
         registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
         registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
         registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
