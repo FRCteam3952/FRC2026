@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.ControlUtils;
+import frc.robot.util.KinematicsUtil;
 
 public class ShooterSubsystem extends SubsystemBase {
     private final SparkMax lowerIntakeMotor;
@@ -58,6 +59,10 @@ public class ShooterSubsystem extends SubsystemBase {
         // System.out.println("speed = " + speed);
         flywheel.set(speed);
         flywheel2.set(-speed);
+    }
+
+    public void stopFlywheel() {
+        setFlywheelSpeed(0);
     }
 
     public void riseFuelHood() { // Need to check whether changing the position of the hood will collide with the min/max thresholds
