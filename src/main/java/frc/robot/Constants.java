@@ -37,7 +37,7 @@ public class Constants {
     }
 
     public static class RobotConstants {
-        public static final double minShooterAngle = 22.0;
+        public static final double minShooterAngle = 22.5;
         public static final double maxShooterAngle = 45.0;
     }
 }

@@ -30,11 +30,11 @@ public class ShooterSubsystem extends SubsystemBase {
     private final TalonFX hoodCover;
 
     private final AbsoluteEncoder hoodCoverAbsoluteEncoder;
-    private final double hoodZeroPosition = 0.7; //down
-    private final double hoodOnePosition = 0.5; //up
-    private final double hoodPositionRange = 1 - hoodZeroPosition + hoodOnePosition;
+    private final double hoodZeroPosition = 0.0700; //down .78
+    private final double hoodOnePosition = 0.7200; //up .52
+    private final double hoodPositionRange = hoodOnePosition - hoodZeroPosition;
 
-    private final PIDController hoodPositionController = new PIDController(0.2, 0, 0);
+    private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
 
     public ShooterSubsystem() {
         lowerIntakeMotor = new SparkMax(Ports.LOWER_INTAKE_CAN_ID, MotorType.kBrushless);
@@ -81,6 +81,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void setHoodSetpoint(double setPoint) {
+        setPoint = ControlUtils.clamp(0.0, setPoint, 1.0);
         hoodPositionController.setSetpoint(setPoint);
     }
 

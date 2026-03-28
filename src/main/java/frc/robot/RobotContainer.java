@@ -168,12 +168,13 @@ public class RobotContainer {
     private void configureAutoChooser() {
         autoChooser = AutoBuilder.buildAutoChooser("Test Path");
         try {            
-            autoChooser.addOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
+            // autoChooser.addOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
             autoChooser.addOption("BTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("BTTSBackAndForthTwiceBlue Auto"));
             autoChooser.addOption("BTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("BTTSBackAndForthTwiceRed Auto"));
-            autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
+            // autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
             autoChooser.addOption("TTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("TTTSBackAndForthTwiceBlue Auto"));
-            autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
+            autoChooser.addOption("TTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("TTTSBackAndForthTwiceRed Auto"));
+            // autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
         } catch (Exception e) {
             DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
         }
