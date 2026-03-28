@@ -246,7 +246,17 @@ public class RobotContainer {
                 drivetrain.applyRequest(() -> idle).ignoringDisable(true)
             );
             
-            joystick.PS().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+            // joystick.PS().onTrue(new InstantCommand(() -> {
+            //     LimelightHelpers.SetIMUMode("limelight-a", 1);
+            //     LimelightHelpers.SetIMUMode("limelight-b", 1);
+            //     LimelightHelpers.SetIMUMode("limelight-c", 1);
+            //     drivetrain.runOnce(drivetrain::seedFieldCentric).execute();
+            //     limelights.ifPresent(limelights -> limelights.updateMegaTag2RobotYaw());
+            // }).finallyDo(() -> {
+            //     LimelightHelpers.SetIMUMode("limelight-a", 4);
+            //     LimelightHelpers.SetIMUMode("limelight-b", 4);
+            //     LimelightHelpers.SetIMUMode("limelight-c", 4);
+            // }));
             drivetrain.registerTelemetry(logger::telemeterize);         
         });
 
