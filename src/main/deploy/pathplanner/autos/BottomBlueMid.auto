@@ -1,0 +1,43 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BlueBottomTrenchtoMiddle"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stopAndAimCommand"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterOn"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 5.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterOff"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

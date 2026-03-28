@@ -239,7 +239,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Pose2d botPose = this.getState().Pose;
         ChassisSpeeds currentSpeed = this.getState().Speeds;
         
-        var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+        var shooterState = KinematicsUtil.getShooterStateWithoutHood(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
         Angle yawAngle = shooterState.getSecond().getFirst();
         
         double rotationSpeedLimiter = 0.2;

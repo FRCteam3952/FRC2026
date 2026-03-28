@@ -86,8 +86,8 @@ public class RobotContainer {
         limelights = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, () -> new LimelightSubsystem(drivetrain.get()));
 
         configureBindings();
-        configureAutoChooser();
         configureNamedCommands();
+        configureAutoChooser();
     }
 
     public void configureNamedCommands() {
@@ -100,21 +100,7 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        registerIfAttached("shooterOn", shooter, shooter -> Commands.run(() -> {
-            Pose2d botPose = getBotPose();
-            ChassisSpeeds currentSpeed = getBotSpeeds();
-
-            // System.out.println("Follow Apriltag Command");
-            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
-            LinearVelocity flywheelVelocity = shooterState.getFirst();
-            Angle yawAngle = shooterState.getSecond().getFirst();
-            Angle hoodAngle = shooterState.getSecond().getSecond();
-            
-            // Auto aim shooter
-            shooter.setHoodSetpoint(hoodAngle);
-            shooter.setFlywheelSpeed(flywheelVelocity);
-        }, shooter).finallyDo(shooter::stopFlywheel)
-        );
+        registerIfAttached("shooterOn", shooter, shooter -> new InstantCommand(() -> shooter.shooterAutoAim(drivetrain.get().getState().Pose, drivetrain.get().getState().Speeds)));
         registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
         registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
         registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
@@ -123,8 +109,10 @@ public class RobotContainer {
 
     private static <T> void registerIfAttached(String name, Optional<T> arg, Function<T, Command> getCommand) {
         if (arg.isPresent()) {
+            System.out.println("registered command: " + name);
             NamedCommands.registerCommand(name, getCommand.apply(arg.get()));
         } else {
+            System.out.println("Did not register un-attached subsystem: " + name);
             NamedCommands.registerCommand(name, new InstantCommand());
         }
     }
@@ -151,7 +139,7 @@ public class RobotContainer {
             ChassisSpeeds currentSpeed = d.getState().Speeds;
             
             // System.out.println("Follow Apriltag Command");
-            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            var shooterState = KinematicsUtil.getShooterStateWithoutHood(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
             Angle yawAngle = shooterState.getSecond().getFirst();
             
             // Drive teleop, auto aiming robot yaw towards hub
@@ -174,6 +162,10 @@ public class RobotContainer {
             // autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
             autoChooser.addOption("TTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("TTTSBackAndForthTwiceBlue Auto"));
             autoChooser.addOption("TTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("TTTSBackAndForthTwiceRed Auto"));
+            // Corner to middle test
+            autoChooser.addOption("TopBlueMid", new PathPlannerAuto("TopBlueMid"));
+            autoChooser.addOption("BottomBlueMid", new PathPlannerAuto("BottomBlueMid"));
+            autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
             // autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
         } catch (Exception e) {
             DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());

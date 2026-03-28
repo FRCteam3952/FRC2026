@@ -12,6 +12,8 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,13 +30,16 @@ public class ShooterSubsystem extends SubsystemBase {
     private final SparkFlex flywheel2;
     private final SparkMax upperIntakeMotor;
     private final TalonFX hoodCover;
-
     private final AbsoluteEncoder hoodCoverAbsoluteEncoder;
-    private final double hoodZeroPosition = 0.0700; //down .78
+    // currently tuning, this is absolute mechanical bottom
+    private final double hoodZeroPosition = 0.4829; //down .05, .78 before
+    //// this value is WRONG:
     private final double hoodOnePosition = 0.7200; //up .52
     private final double hoodPositionRange = hoodOnePosition - hoodZeroPosition;
 
     private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
+
+    public boolean autoShooterOn = false;
 
     public ShooterSubsystem() {
         lowerIntakeMotor = new SparkMax(Ports.LOWER_INTAKE_CAN_ID, MotorType.kBrushless);
@@ -112,7 +117,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void runHoodPositionPID() {
         // TEMPORARY DISABLE
         // System.out.println("getHoodPosition() = " + getHoodPosition());
-        hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
+        // hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
     }
     
     public void setFlywheelSpeed(LinearVelocity flywheelVelocity) {
@@ -141,11 +146,25 @@ public class ShooterSubsystem extends SubsystemBase {
         upperIntakeMotor.set(0);    
     }
 
+    public void shooterAutoAim(Pose2d botPose, ChassisSpeeds currentSpeed) {
+        System.out.println("shooterOn running");
+        
+        // System.out.println("Follow Apriltag Command");
+        var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+        LinearVelocity flywheelVelocity = shooterState.getFirst();
+        Angle hoodAngle = shooterState.getSecond().getSecond();
+        
+        // Auto aim shooter
+        this.setHoodSetpoint(hoodAngle);
+        System.out.println("flywheel speed: " + flywheelVelocity);
+        this.setFlywheelSpeed(flywheelVelocity);
+    }
+
     @Override
     public void periodic() {
         // Check to see if the limit switch has been triggered
-        System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
-        runHoodPositionPID();
+        // System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
+        // runHoodPositionPID();
         // System.out.println("up = " + printHoodSetpoint(Angle.ofBaseUnits(45, Degrees)));
         // System.out.println("down = " + printHoodSetpoint(Angle.ofBaseUnits(22, Degrees)));
     }
