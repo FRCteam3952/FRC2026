@@ -29,8 +29,8 @@ public class IntakeSubsystem extends SubsystemBase {
     // private final RelativeEncoder leftEncoder;
 
     private final double downPivotPos = 0.2530;
-    private final double jigglePivotPos = 0.4000;
-    private final double middlePivotPos = 0.5640;
+    private final double jigglePivotPos = 0.3000;  // tune me?
+    private final double middlePivotPos = 0.6000; // tune me?
     private final double upPivotPos = 0.7680;
 
     // private final double leftEncoderRange = 7.5;
@@ -98,7 +98,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void setPivotSpeeds(double speed) {
-        System.out.println("speed = " + speed);
+        // System.out.println("speed = " + speed);
         if (speed > 0.05) {
             rightPivot.set(speed + 0.1);
         } else {
@@ -107,7 +107,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        intakeMotor.set(0.35);
+        intakeMotor.set(0.5);
     }
 
     public void stopLoadFuel() {
@@ -165,7 +165,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public void periodic() {
         runPivotPID();
         
-        System.out.println("right =" + getNormalizedRightPosition());
+        // System.out.println("right =" + getNormalizedRightPosition());
         //System.out.println("left = " + getNormalizedLeftPosition());
     }
 }

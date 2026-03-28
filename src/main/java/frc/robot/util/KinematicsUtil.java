@@ -3,9 +3,14 @@ package frc.robot.util;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 
+import java.lang.reflect.Field;
+
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Constants.FieldConstants;
 
 public class KinematicsUtil {
@@ -15,8 +20,18 @@ public class KinematicsUtil {
         double hubRadius = 0.57;
         double ivanConstant = 0.15;
         double hubHeight = 1.5; // negating shooter hHeight
-        double hubX = FieldConstants.BLUE_HUB_CENTER_TRANSLATION.getX();
-        double hubY = FieldConstants.BLUE_HUB_CENTER_TRANSLATION.getY();
+
+        Translation2d hub = FieldConstants.RED_HUB_CENTER_TRANSLATION;
+        if (DriverStation.getAlliance().isPresent()) {
+            if (DriverStation.getAlliance().get() == Alliance.Blue) {
+                hub = FieldConstants.BLUE_HUB_CENTER_TRANSLATION;
+            }
+        } else {
+            System.out.println("Error: could not get alliance; defaulting to red");
+        }
+
+        double hubX = hub.getX();
+        double hubY = hub.getY();
         
         double xDiff = xPos-hubX;
         double yDiff = yPos-hubY;

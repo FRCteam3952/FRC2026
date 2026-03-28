@@ -19,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TopTrenchToSupplyOne"
+            "pathName": "RedTopTrenchToSupplyOne"
           }
         },
         {
@@ -31,7 +31,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "SupplyToTopTrenchOne"
+            "pathName": "RedSupplyToTopTrenchOne"
           }
         },
         {
@@ -67,7 +67,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "TopTrenchToSupplyTwo"
+            "pathName": "RedTopTrenchToSupplyTwo"
           }
         },
         {
@@ -79,7 +79,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "SupplyToTopTrenchTwo"
+            "pathName": "RedSupplyToTopTrenchTwo"
           }
         }
       ]

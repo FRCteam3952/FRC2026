@@ -5,9 +5,27 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "setPivotDown"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeOn"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "BottomTrenchToSupplyOne"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeOff"
           }
         },
         {
@@ -17,9 +35,45 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "stopAndAimCommand"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterOn"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 5.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterOff"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeOn"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "BottomTrenchToSupplyTwo"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeOff"
           }
         },
         {

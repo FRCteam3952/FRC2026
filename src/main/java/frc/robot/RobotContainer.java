@@ -100,7 +100,25 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
+        registerIfAttached("shooterOn", shooter, shooter -> Commands.run(() -> {
+            Pose2d botPose = getBotPose();
+            ChassisSpeeds currentSpeed = getBotSpeeds();
 
+            // System.out.println("Follow Apriltag Command");
+            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            LinearVelocity flywheelVelocity = shooterState.getFirst();
+            Angle yawAngle = shooterState.getSecond().getFirst();
+            Angle hoodAngle = shooterState.getSecond().getSecond();
+            
+            // Auto aim shooter
+            shooter.setHoodSetpoint(hoodAngle);
+            shooter.setFlywheelSpeed(flywheelVelocity);
+        }, shooter).finallyDo(shooter::stopFlywheel)
+        );
+        registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
+        registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
+        registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
+        registerIfAttached("stopAndAimCommand", drivetrain, drivetrain -> getStopAndAimCommand(drivetrain));
     }   
 
     private static <T> void registerIfAttached(String name, Optional<T> arg, Function<T, Command> getCommand) {
@@ -119,22 +137,22 @@ public class RobotContainer {
         }
     }
 
-    public Command getStopAndShootCommand(CommandSwerveDrivetrain d) {
+    public Pose2d getBotPose() {
+        return drivetrain.map(d -> d.getState().Pose).orElse(new Pose2d());
+    }
+
+    public ChassisSpeeds getBotSpeeds() {
+        return drivetrain.map(d -> d.getState().Speeds).orElse(new ChassisSpeeds());
+    }
+
+    public Command getStopAndAimCommand(CommandSwerveDrivetrain d) {
         return d.applyRequest(() -> {
             Pose2d botPose = d.getState().Pose;
             ChassisSpeeds currentSpeed = d.getState().Speeds;
             
             // System.out.println("Follow Apriltag Command");
             var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
-            LinearVelocity flywheelVelocity = shooterState.getFirst();
             Angle yawAngle = shooterState.getSecond().getFirst();
-            Angle hoodAngle = shooterState.getSecond().getSecond();
-            
-            // Auto aim shooter
-            shooter.ifPresent(shooter -> {
-                shooter.setHoodSetpoint(hoodAngle);
-                shooter.setFlywheelSpeed(flywheelVelocity);
-            });
             
             // Drive teleop, auto aiming robot yaw towards hub
             double rotationSpeedLimiter = 0.2;
@@ -149,14 +167,13 @@ public class RobotContainer {
 
     private void configureAutoChooser() {
         autoChooser = AutoBuilder.buildAutoChooser("Test Path");
-        try {
-            PathPlannerPath testPath = PathPlannerPath.fromPathFile("Test Path");
-            PathPlannerAuto FRCAuto = new PathPlannerAuto("FRC Auto");
-            Command simplePath = AutoBuilder.followPath(testPath);
-            
-            autoChooser.setDefaultOption("Path 1", simplePath);
-            autoChooser.addOption("Path 1", simplePath);
-            autoChooser.addOption("FRC Auto", FRCAuto);
+        try {            
+            autoChooser.addOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
+            autoChooser.addOption("BTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("BTTSBackAndForthTwiceBlue Auto"));
+            autoChooser.addOption("BTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("BTTSBackAndForthTwiceRed Auto"));
+            autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
+            autoChooser.addOption("TTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("TTTSBackAndForthTwiceBlue Auto"));
+            autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
         } catch (Exception e) {
             DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
         }
@@ -169,10 +186,14 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention
         pdp.setSwitchableChannel(true);
 
+
         drivetrain.ifPresent(drivetrain -> {
             drivetrain.initPID();
 
-            joystick.PS().onTrue(new InstantCommand(() -> drivetrain.seedFieldCentric()));
+            joystick.PS().onTrue(new InstantCommand(() -> {
+                // drivetrain.seedFieldCentric();
+                drivetrain.getPigeon2().setYaw(180);
+            }));
 
             teleopDriveCommand = drivetrain.applyRequest(() -> {
                 return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
@@ -182,7 +203,7 @@ public class RobotContainer {
             });
 
             followApriltagCommand = drivetrain.applyRequest(() -> {
-                System.out.println("follow apriltag command");
+                System.out.println("\n\n\nfollow apriltag command");
                 Pose2d botPose = drivetrain.getState().Pose;
                 ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
                 
@@ -202,7 +223,7 @@ public class RobotContainer {
                     }
                 });
 
-                System.out.println("Yaw should be: " + yawAngle);
+                System.out.println("------------ (degrees) Yaw should be: " + yawAngle.in(Degrees));
                 
                 // Drive teleop, auto aiming robot yaw towards hub
                 double rotationSpeedLimiter = 0.2;
@@ -229,6 +250,11 @@ public class RobotContainer {
         });
 
         shooter.ifPresent(shooter -> {
+            joystick.triangle().onTrue(new InstantCommand(() -> shooter.setHoodSetpoint(1.0)));
+            joystick.triangle().onFalse(new InstantCommand(shooter::stopFuelHood));
+            joystick.cross().onTrue(new InstantCommand(() -> shooter.setHoodSetpoint(0.0)));
+            joystick.cross().onFalse(new InstantCommand(shooter::stopFuelHood));
+
             // cross to disable auto aim,
             // if (joystick.R1().getAsBoolean() == false) {
             joystick.R2().and(joystick.R1().negate()).whileTrue(followApriltagCommand);
@@ -276,13 +302,12 @@ public class RobotContainer {
         
 
             // jiggle that thing while shooting (r2)
-            joystick.R2().whileTrue(new WaitCommand(2)
+            joystick.R2().whileTrue(new WaitCommand(1)
                 .andThen(new RepeatCommand(
                     new InstantCommand(intake::setPivotMiddle)
-                    .andThen(new WaitCommand(0.2))
+                    .andThen(new WaitCommand(0.5))
                     .andThen(new InstantCommand(intake::setPivotJiggle))
-                    .andThen(new InstantCommand(intake::setPivotJiggle))
-                    .andThen(new WaitCommand(0.2))
+                    .andThen(new WaitCommand(0.5))
             )));
             joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));
         });
@@ -313,8 +338,8 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand() {
-        // return autoChooser.getSelected();
-        return null;
+        return autoChooser.getSelected();
+        // return null;
 
         // ------------------------------------------------------------------------------------------------------
         //                           End of our code. Template code below:

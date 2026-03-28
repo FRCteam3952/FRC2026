@@ -10,18 +10,19 @@ public class Constants {
         public static final int AGITATOR_CAN_ID = 1; 
         
         // normal sparks
-        public static final int HOOD_COVER_CAN_ID = 9;
         public static final int LOWER_INTAKE_CAN_ID = 7;
         public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 20;
-
+        
 
         public static final int UPPER_INTAKE_CAN_ID = 17; 
         public static final int ROLLER_CAN_ID = 21;
         public static final int INTAKE_MOTOR_CAN_ID = 19;
 
+
         // talons
+        public static final int HOOD_COVER_CAN_ID = 24;
         // public static final int LEFT_INTAKE_PIVOT_CAN_ID = 24;
-        public static final int CLIMBER_CAN_ID = 24;
+        public static final int CLIMBER_CAN_ID = 25; // doesnt exist
     }
 
     public static class NetworkTablesConstants {
@@ -36,7 +37,7 @@ public class Constants {
     }
 
     public static class RobotConstants {
-        public static final double minShooterAngle = 18.0;
+        public static final double minShooterAngle = 22.0;
         public static final double maxShooterAngle = 45.0;
     }
 }

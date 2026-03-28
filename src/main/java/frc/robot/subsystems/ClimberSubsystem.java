@@ -64,7 +64,7 @@ public class ClimberSubsystem extends SubsystemBase {
         }
         prevMotorPosition = newMotorPosition;
 
-        System.out.println("getRawPositionDegrees() = " + getRawPositionDegrees());
-        System.out.println("getTotalPositionDegrees() = " + getTotalPositionDegrees());
+        // System.out.println("getRawPositionDegrees() = " + getRawPositionDegrees());
+        // System.out.println("getTotalPositionDegrees() = " + getTotalPositionDegrees());
     }
 }

@@ -3,44 +3,51 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 13.009,
-        "y": 7.386
+        "x": 13.137306034482759,
+        "y": 7.43625
       },
       "prevControl": null,
       "nextControl": {
-        "x": 10.84749255952381,
-        "y": 7.421629464285714
+        "x": 8.983480603448276,
+        "y": 7.573081896551725
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.793653273809523,
-        "y": 4.528
+        "x": 8.748911637931036,
+        "y": 3.536540948275862
       },
       "prevControl": {
-        "x": 7.604419642857142,
-        "y": 8.093735119047619
+        "x": 8.748911637931036,
+        "y": 7.100363172683267
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "NewEndBTTSTwo"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.28,
-      "rotationDegrees": 180.0
+      "waypointRelativePos": 0.26977687626774877,
+      "rotationDegrees": -0.03241335797258339
     },
     {
-      "waypointRelativePos": 0.69,
-      "rotationDegrees": 88.88329726755282
+      "waypointRelativePos": 0.6700450450450446,
+      "rotationDegrees": 102.46384651770741
     }
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "Pick balls up",
+      "waypointRelativePos": 0.7383561643835618,
+      "endWaypointRelativePos": 1.0,
+      "command": null
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 3.0,
     "maxAcceleration": 3.0,
@@ -56,8 +63,8 @@
   "reversed": false,
   "folder": null,
   "idealStartingState": {
-    "velocity": 0.0,
-    "rotation": 180.0
+    "velocity": 0,
+    "rotation": -0.5013338505944093
   },
   "useDefaultConstraints": true
 }

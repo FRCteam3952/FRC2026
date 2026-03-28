@@ -3,25 +3,41 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 13.009,
-        "y": 0.686
+        "x": 8.759,
+        "y": 4.465
       },
       "prevControl": null,
       "nextControl": {
-        "x": 10.997574404761904,
-        "y": 0.785401785714287
+        "x": 8.759,
+        "y": 7.786190332899364
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 8.707,
-        "y": 3.528
+        "x": 12.0,
+        "y": 7.386
       },
       "prevControl": {
-        "x": 8.674373511904763,
-        "y": -0.049836309523809685
+        "x": 8.919656788307904,
+        "y": 7.386
+      },
+      "nextControl": {
+        "x": 12.781976122058516,
+        "y": 7.386
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 13.059116379310344,
+        "y": 7.386
+      },
+      "prevControl": {
+        "x": 11.552550376912572,
+        "y": 7.38530926724138
       },
       "nextControl": null,
       "isLocked": false,
@@ -30,21 +46,17 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.45,
-      "rotationDegrees": 180.0
-    },
-    {
-      "waypointRelativePos": 0.69,
-      "rotationDegrees": -90.25321571479991
+      "waypointRelativePos": 0.7060810810810835,
+      "rotationDegrees": 0.0
     }
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "Pick balls up",
-      "waypointRelativePos": 0.78,
-      "endWaypointRelativePos": 1.0,
+      "name": "Shoot balls",
+      "waypointRelativePos": 1.0,
+      "endWaypointRelativePos": null,
       "command": null
     }
   ],
@@ -58,13 +70,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -90.0
+    "rotation": -0.143
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0.0,
-    "rotation": 180.0
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

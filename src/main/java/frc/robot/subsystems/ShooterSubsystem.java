@@ -3,6 +3,9 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import java.util.concurrent.atomic.DoubleAccumulator;
+
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkFlex;
@@ -21,28 +24,28 @@ public class ShooterSubsystem extends SubsystemBase {
     private final SparkMax lowerIntakeMotor;
     public final SparkMax roller;
     private final SparkFlex agitator;
-    private final SparkMax flywheel;
-    private final SparkMax flywheel2;
+    private final SparkFlex flywheel;
+    private final SparkFlex flywheel2;
     private final SparkMax upperIntakeMotor;
-    private final SparkMax hoodCover;
+    private final TalonFX hoodCover;
 
     private final AbsoluteEncoder hoodCoverAbsoluteEncoder;
-    private final double hoodZeroPosition = 0.1448;
-    private final double hoodOnePosition = 0.0483;
+    private final double hoodZeroPosition = 0.7; //down
+    private final double hoodOnePosition = 0.5; //up
     private final double hoodPositionRange = 1 - hoodZeroPosition + hoodOnePosition;
 
-    private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
+    private final PIDController hoodPositionController = new PIDController(0.2, 0, 0);
 
     public ShooterSubsystem() {
         lowerIntakeMotor = new SparkMax(Ports.LOWER_INTAKE_CAN_ID, MotorType.kBrushless);
         roller = new SparkMax(Ports.ROLLER_CAN_ID, MotorType.kBrushless);
         agitator = new SparkFlex(Ports.AGITATOR_CAN_ID, MotorType.kBrushless);
-        flywheel = new SparkMax(Ports.FLYWHEEL_CAN_ID, MotorType.kBrushless);
-        flywheel2 = new SparkMax(Ports.FLYWHEEL2_CAN_ID, MotorType.kBrushless);
+        flywheel = new SparkFlex(Ports.FLYWHEEL_CAN_ID, MotorType.kBrushless);
+        flywheel2 = new SparkFlex(Ports.FLYWHEEL2_CAN_ID, MotorType.kBrushless);
         upperIntakeMotor = new SparkMax(Ports.UPPER_INTAKE_CAN_ID, MotorType.kBrushless);
-        hoodCover = new SparkMax(Ports.HOOD_COVER_CAN_ID, MotorType.kBrushless);
+        hoodCover = new TalonFX(Ports.HOOD_COVER_CAN_ID);
 
-        hoodCoverAbsoluteEncoder = hoodCover.getAbsoluteEncoder();
+        hoodCoverAbsoluteEncoder = lowerIntakeMotor.getAbsoluteEncoder();
         hoodPositionController.setSetpoint(0.0);
         
         // SparkMaxConfig flywheelConfig = new SparkMaxConfig();
@@ -88,6 +91,13 @@ public class ShooterSubsystem extends SubsystemBase {
         setHoodSetpoint(setpoint);
     }
 
+    public double printHoodSetpoint(Angle angleFromHorizontal) {
+        double degreesFromVertical = 90 - angleFromHorizontal.in(Degrees); 
+        double shooterRange = Constants.RobotConstants.maxShooterAngle - Constants.RobotConstants.minShooterAngle;
+        double setpoint = (degreesFromVertical - Constants.RobotConstants.minShooterAngle) / shooterRange;
+        return setpoint;
+    }
+
     public double getHoodPosition() {
         double rawPosition = hoodCoverAbsoluteEncoder.getPosition();
         double possiblyNegativeTruePosition = rawPosition - hoodZeroPosition;
@@ -100,6 +110,7 @@ public class ShooterSubsystem extends SubsystemBase {
     
     public void runHoodPositionPID() {
         // TEMPORARY DISABLE
+        // System.out.println("getHoodPosition() = " + getHoodPosition());
         hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
     }
     
@@ -109,7 +120,7 @@ public class ShooterSubsystem extends SubsystemBase {
         double flywheelSpeedLossFactor = 4; // previously 1.3
 
         double motorOutput = fuelSpeed * fuelSpeedToMotorOutput * flywheelSpeedLossFactor;
-        System.out.println("motorOutput: " + motorOutput);
+        // System.out.println("motorOutput: " + motorOutput);
         setFlywheelSpeed(ControlUtils.clamp(0, motorOutput, 1));
     }
 
@@ -132,7 +143,9 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         // Check to see if the limit switch has been triggered
-        // System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
+        System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
         runHoodPositionPID();
+        // System.out.println("up = " + printHoodSetpoint(Angle.ofBaseUnits(45, Degrees)));
+        // System.out.println("down = " + printHoodSetpoint(Angle.ofBaseUnits(22, Degrees)));
     }
 }

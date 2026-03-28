@@ -4,24 +4,24 @@
     {
       "anchor": {
         "x": 13.009,
-        "y": 0.686
+        "y": 7.386
       },
       "prevControl": null,
       "nextControl": {
-        "x": 10.997574404761904,
-        "y": 0.785401785714287
+        "x": 10.84749255952381,
+        "y": 7.421629464285714
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 8.707,
-        "y": 3.528
+        "x": 8.758685344827587,
+        "y": 4.504137931034483
       },
       "prevControl": {
-        "x": 8.674373511904763,
-        "y": -0.049836309523809685
+        "x": 8.569451713875205,
+        "y": 8.069873050082101
       },
       "nextControl": null,
       "isLocked": false,
@@ -30,24 +30,17 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.45,
+      "waypointRelativePos": 0.28,
       "rotationDegrees": 180.0
     },
     {
       "waypointRelativePos": 0.69,
-      "rotationDegrees": -90.25321571479991
+      "rotationDegrees": 88.88329726755282
     }
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "Pick balls up",
-      "waypointRelativePos": 0.78,
-      "endWaypointRelativePos": 1.0,
-      "command": null
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 3.0,
     "maxAcceleration": 3.0,
@@ -58,7 +51,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -90.0
+    "rotation": 90.0
   },
   "reversed": false,
   "folder": null,
