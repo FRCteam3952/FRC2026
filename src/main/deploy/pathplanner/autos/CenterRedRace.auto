@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RedCenterToCenterMiddle"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 1.2
+                }
+              }
+            ]
           }
         },
         {
@@ -31,7 +44,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 10.0
+            "waitTime": 10.8
           }
         },
         {

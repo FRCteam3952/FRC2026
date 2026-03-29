@@ -7,37 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "pathName": "TestPathForwardsSlightly"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "setPivotDown"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 1.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOn"
+            "name": "intakeOn"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 10.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOff"
+            "waitTime": 4.0
           }
         }
       ]

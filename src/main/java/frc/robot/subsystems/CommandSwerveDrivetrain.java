@@ -239,7 +239,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Pose2d botPose = this.getState().Pose;
         ChassisSpeeds currentSpeed = this.getState().Speeds;
         
-        var shooterState = KinematicsUtil.getShooterStateWithoutHood(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+        var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
         Angle yawAngle = shooterState.getSecond().getFirst();
         
         double rotationSpeedLimiter = 0.2;
@@ -262,6 +262,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     if (autoAimAlongPath) {
                         speeds.omegaRadiansPerSecond = getAutoAimYawSpeed();
                     }
+                    // TODO: trying an invert here as a temporary fix:
+                    // speeds.vyMetersPerSecond *= -1; // this code is very bad. we can only run center autos. remove this soon after testing.
                     setControl(
                         m_pathApplyRobotSpeeds.withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
                             .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
@@ -270,12 +272,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 },
                 new PPHolonomicDriveController(
                     // PID constants for translation
-                    new PIDConstants(0.1, 0, 0),
+                    new PIDConstants(5.0, 0, 0),
                     // PID constants for rotation
-                    new PIDConstants(100, 0, 0.5)
+                    new PIDConstants(5.0, 0, 0.0)
                 ),
                 config,
-                // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                // Assume the path needs to be flipped for Red vs Blue, this is normally the case/
                 () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
                 this // Subsystem for requirements
             );

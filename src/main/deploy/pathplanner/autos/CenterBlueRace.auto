@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "BlueMiddleToCenterMiddle"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 1.2
+                }
+              }
+            ]
           }
         },
         {
@@ -25,19 +38,25 @@
         {
           "type": "named",
           "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
+            "name": "flywheel0.8"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOff"
+            "name": "shooterLoad"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 10.8
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterAllStop"
           }
         }
       ]

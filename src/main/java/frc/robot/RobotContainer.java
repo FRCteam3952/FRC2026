@@ -25,6 +25,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -78,15 +79,19 @@ public class RobotContainer {
 
     private boolean shooterOn = false;
 
+    public static RobotContainer INSTANCE;
+
     public RobotContainer() {
+        RobotContainer.INSTANCE = this;
+
         intake = initializeIfAttached(Flags.INTAKE_IS_ATTACHED, IntakeSubsystem::new);
         drivetrain = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, TunerConstants::createDrivetrain);
         shooter = initializeIfAttached(Flags.SHOOTER_IS_ATTACHED, ShooterSubsystem::new);
         climber = initializeIfAttached(Flags.CLIMBER_IS_ATTACHED, ClimberSubsystem::new);
         limelights = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, () -> new LimelightSubsystem(drivetrain.get()));
+        configureNamedCommands();
 
         configureBindings();
-        configureNamedCommands();
         configureAutoChooser();
     }
 
@@ -100,13 +105,33 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        registerIfAttached("shooterOn", shooter, shooter -> new InstantCommand(() -> 
-            shooter.shooterAutoAim(drivetrain.get().getState().Pose, drivetrain.get().getState().Speeds)));
+        registerIfAttached("shooterOn", shooter, shooter -> getStopAndAimShooterCommand(shooter));
         registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
         registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
         registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
         registerIfAttached("stopAndAimCommand", drivetrain, drivetrain -> getStopAndAimCommand(drivetrain));
+
+        registerIfAttached("flywheel0.8", shooter, shooter -> new InstantCommand(() -> shooter.setFlywheelSpeed(0.8)));
+        registerIfAttached("shooterLoad", shooter, shooter -> new InstantCommand(() -> shooter.startLoadFuel()));
+        registerIfAttached("shooterAllStop", shooter, shooter -> new InstantCommand(() -> {shooter.stopLoadFuel(); shooter.setFlywheelSpeed(0.8);}));
+        registerIfAttached("printShooter", shooter, shooter -> new InstantCommand(() -> System.out.println("printShooter ran")));
+        registerIfAttached("printShooter1.0", shooter, shooter -> new InstantCommand(() -> {
+            System.out.println("printShooter1.0 ran");
+            shooter.setFlywheelSpeed(0.4);
+        }));
     }   
+
+    public Pose2d getPose() {
+        return drivetrain.get().getState().Pose;
+    }
+
+    public ChassisSpeeds getSpeeds() {
+        return drivetrain.get().getState().Speeds;
+    }
+
+    public Command getStopAndAimShooterCommand(ShooterSubsystem shooter) {
+        return new InstantCommand(shooter::shooterAutoAim);
+    }
 
     private static <T> void registerIfAttached(String name, Optional<T> arg, Function<T, Command> getCommand) {
         if (arg.isPresent()) {
@@ -140,7 +165,7 @@ public class RobotContainer {
             ChassisSpeeds currentSpeed = d.getState().Speeds;
             
             // System.out.println("Follow Apriltag Command");
-            var shooterState = KinematicsUtil.getShooterStateWithoutHood(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+            var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
             Angle yawAngle = shooterState.getSecond().getFirst();
             
             // Drive teleop, auto aiming robot yaw towards hub
@@ -151,7 +176,7 @@ public class RobotContainer {
             return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
                 .withVelocityY(0)// Drive left with negative X (left) (MaxSpeed)
                 .withRotationalRate(yawSpeed * MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-        });
+        }).repeatedly();
     }
 
     private void configureAutoChooser() {
@@ -159,15 +184,29 @@ public class RobotContainer {
         try {            
             // autoChooser.addOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
             autoChooser.addOption("BTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("BTTSBackAndForthTwiceBlue Auto"));
-            autoChooser.addOption("BTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("BTTSBackAndForthTwiceRed Auto"));
+            // autoChooser.addOption("BTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("BTTSBackAndForthTwiceRed Auto"));
             // autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
             autoChooser.addOption("TTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("TTTSBackAndForthTwiceBlue Auto"));
-            autoChooser.addOption("TTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("TTTSBackAndForthTwiceRed Auto"));
-            // Corner to middle test
-            autoChooser.addOption("TopBlueMid", new PathPlannerAuto("TopBlueMid"));
+            // autoChooser.addOption("TTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("TTTSBackAndForthTwiceRed Auto"));            
+
             autoChooser.addOption("BottomBlueMid", new PathPlannerAuto("BottomBlueMid"));
-            autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
-            autoChooser.addOption("BottomRedMid", new PathPlannerAuto("BottomRedMid"));
+            autoChooser.addOption("TopBlueMid", new PathPlannerAuto("TopBlueMid"));
+            autoChooser.addOption("CenterBlueMid", new PathPlannerAuto("CenterBlueMid"));
+
+            // autoChooser.addOption("BottomRedMid", new PathPlannerAuto("BottomRedMid"));
+            // autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
+            // autoChooser.addOption("CenterRedMid", new PathPlannerAuto("CenterRedMid"));
+
+            autoChooser.addOption("CenterBlueRace", new PathPlannerAuto("CenterRedMid"));
+
+
+            autoChooser.addOption("VedanthBlueLeft", new PathPlannerAuto("VedanthBlueLeft"));
+
+            // autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
+            autoChooser.addOption("Shooter Test", new PathPlannerAuto("Shooter Test"));
+            autoChooser.addOption("NothingAuto", new PathPlannerAuto("NothingAuto"));
+
+
             // autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
         } catch (Exception e) {
             DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
@@ -181,15 +220,18 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention
         pdp.setSwitchableChannel(true);
 
-
-        drivetrain.ifPresent(drivetrain -> {
-            drivetrain.initPID();
-
+            
+        drivetrain.ifPresent(drivetrain -> {                                                                                                                                                                                                                                                                                              
+            drivetrain.initPID();         
+            
             joystick.PS().onTrue(new InstantCommand(() -> {
-                // drivetrain.seedFieldCentric();
-                drivetrain.getPigeon2().setYaw(180);
+                // drivetrain.seedFieldCentric(); // not necessary?
+                // if (
+                //  {
+                    drivetrain.getPigeon2().setYaw(180);
+                // }
             }));
-
+                                                  
             teleopDriveCommand = drivetrain.applyRequest(() -> {
                 return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
                             .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
@@ -269,7 +311,7 @@ public class RobotContainer {
                 new InstantCommand(() -> {
                     // TODO: do we alwayd auto aim now?
                     if (joystick.R1().getAsBoolean() == true) {
-                        shooter.setFlywheelSpeed(0.6); // done twice check follow apriltag command
+                        shooter.setFlywheelSpeed(0.8); // done twice check follow apriltag command
                     } else {
                         shooterOn = true;
                     } 
@@ -289,7 +331,12 @@ public class RobotContainer {
         
         intake.ifPresent(intake -> {
             // L1 to toggle the pivot up and down
-            joystick.L1().onTrue(new InstantCommand(intake::togglePivot));
+            // Note: now only toggles it to down, doesn't go up
+            joystick.L1().onTrue(
+                new InstantCommand(intake::togglePivot)
+                .andThen(new WaitCommand(2.5))
+                .andThen(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(false)))
+            );
 
             // joystick.povUp().onTrue(new InstantCommand(intake::pivotTowardPositive));
             // joystick.povDown().onTrue(new InstantCommand(intake::pivotTowardNegative));
@@ -305,16 +352,18 @@ public class RobotContainer {
             joystick.L2().onTrue(new InstantCommand(intake::startLoadFuel));
             joystick.L2().onFalse(new InstantCommand(intake::stopLoadFuel));
         
+            // joystick.square().onTrue(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(true)));
+            // joystick.square().onFalse(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(false)));
 
-            // jiggle that thing while shooting (r2)
-            joystick.R2().whileTrue(new WaitCommand(1)
-                .andThen(new RepeatCommand(
-                    new InstantCommand(intake::setPivotMiddle)
-                    .andThen(new WaitCommand(0.5))
-                    .andThen(new InstantCommand(intake::setPivotJiggle))
-                    .andThen(new WaitCommand(0.5))
-            )));
-            joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));
+            // // jiggle that thing while shooting (r2)
+            // joystick.R2().whileTrue(new WaitCommand(1)
+            //     .andThen(new RepeatCommand(
+            //         new InstantCommand(intake::setPivotMiddle)
+            //         .andThen(new WaitCommand(0.5))
+            //         .andThen(new InstantCommand(intake::setPivotJiggle))
+            //         .andThen(new WaitCommand(0.5))
+            // )));
+            // joystick.R2().onFalse(new InstantCommand(intake::setPivotUp));
         });
             // luca did ALL of this ^^^
         climber.ifPresent(climber -> {

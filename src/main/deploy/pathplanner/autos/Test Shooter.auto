@@ -7,19 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stopAndAimCommand"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 3.0
+            "pathName": "TestPathForwardsSlightly"
           }
         },
         {
@@ -31,7 +19,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 10.0
+            "waitTime": 1.0
           }
         },
         {

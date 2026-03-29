@@ -11,8 +11,8 @@ public class Constants {
         
         // normal sparks
         public static final int LOWER_INTAKE_CAN_ID = 7;
-        public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 20;
         
+        public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 14;
 
         public static final int UPPER_INTAKE_CAN_ID = 17; 
         public static final int ROLLER_CAN_ID = 21;
