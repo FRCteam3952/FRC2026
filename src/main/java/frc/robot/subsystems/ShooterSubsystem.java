@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import java.util.concurrent.atomic.DoubleAccumulator;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.pathplanner.lib.config.RobotConfig;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkFlex;
@@ -18,6 +19,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.Constants.Ports;
 import frc.robot.util.ControlUtils;
 import frc.robot.util.KinematicsUtil;
@@ -32,9 +34,9 @@ public class ShooterSubsystem extends SubsystemBase {
     private final TalonFX hoodCover;
     private final AbsoluteEncoder hoodCoverAbsoluteEncoder;
     // currently tuning, this is absolute mechanical bottom
-    private final double hoodZeroPosition = 0.4829; //down .05, .78 before
+    private final double hoodZeroPosition = 0.1730; //down .05, .78 before
     //// this value is WRONG:
-    private final double hoodOnePosition = 0.7200; //up .52
+    private final double hoodOnePosition = 0.8730; //up .52
     private final double hoodPositionRange = hoodOnePosition - hoodZeroPosition;
 
     private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
@@ -60,7 +62,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuelFlywheel() {
-        setFlywheelSpeed(-0.7);
+        // setFlywheelSpeed(-0.7); no funciona
     }
 
     public void setFlywheelSpeed(double speed) {
@@ -117,7 +119,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void runHoodPositionPID() {
         // TEMPORARY DISABLE
         // System.out.println("getHoodPosition() = " + getHoodPosition());
-        // hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
+        hoodCover.set(-hoodPositionController.calculate(getHoodPosition()));
     }
     
     public void setFlywheelSpeed(LinearVelocity flywheelVelocity) {
@@ -146,7 +148,9 @@ public class ShooterSubsystem extends SubsystemBase {
         upperIntakeMotor.set(0);    
     }
 
-    public void shooterAutoAim(Pose2d botPose, ChassisSpeeds currentSpeed) {
+    public void shooterAutoAim() {
+        Pose2d botPose = RobotContainer.INSTANCE.getBotPose();
+        ChassisSpeeds currentSpeed = RobotContainer.INSTANCE.getSpeeds();
         System.out.println("shooterOn running");
         
         // System.out.println("Follow Apriltag Command");
@@ -164,7 +168,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void periodic() {
         // Check to see if the limit switch has been triggered
         // System.out.println("hood position = " + hoodCoverAbsoluteEncoder.getPosition());
-        // runHoodPositionPID();
+        runHoodPositionPID();
         // System.out.println("up = " + printHoodSetpoint(Angle.ofBaseUnits(45, Degrees)));
         // System.out.println("down = " + printHoodSetpoint(Angle.ofBaseUnits(22, Degrees)));
     }

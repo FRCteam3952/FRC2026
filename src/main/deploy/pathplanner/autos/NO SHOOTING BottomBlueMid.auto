@@ -19,25 +19,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOff"
+            "waitTime": 5.0
           }
         }
       ]

@@ -7,31 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "pathName": "TopTrenchToSupplyOne"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "SupplyToTopTrenchOne"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BlueTopTrenchToMiddlePointing"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "flywheel0.8"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
+            "waitTime": 7.0
           }
         },
         {

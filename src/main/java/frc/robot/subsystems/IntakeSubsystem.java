@@ -20,7 +20,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // TODO pivot
     // private final SparkMax leftPivot;
     private final SparkMax rightPivot;
-    private final PIDController rightPivotPID = new PIDController(2, 0, 0);
+    private final PIDController rightPivotPID = new PIDController(3.0, 0, 0);
     // private final PIDController leftPivotPID = new PIDController(0.5, 0, 0);
 
     private final SparkMax intakeMotor;
@@ -28,13 +28,19 @@ public class IntakeSubsystem extends SubsystemBase {
     private final AbsoluteEncoder rightAbsoluteEncoder;
     // private final RelativeEncoder leftEncoder;
 
-    private final double downPivotPos = 0.2530;
-    private final double jigglePivotPos = 0.3000;  // tune me?
-    private final double middlePivotPos = 0.6000; // tune me?
-    private final double upPivotPos = 0.7680;
+    private final double downPivotPos = 0.080; // is: 0.059
+    // private final double jigglePivotPos = 0.3000;  // tune me?
+    // private final double middlePivotPos = 0.6000; // tune me?
+    private final double upPivotPos = 0.5780; // 0.6080 max
+
+    public boolean timWantsTheIntakeToMove = true;
 
     // private final double leftEncoderRange = 7.5;
     // private final double rightEncoderRange = upPivotPos - downPivotPos;
+
+    public void setTimWantsTheIntakeToMove(boolean value) {
+        timWantsTheIntakeToMove = value;
+    }
 
     public IntakeSubsystem() {
         intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
@@ -107,7 +113,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        intakeMotor.set(0.5);
+        intakeMotor.set(0.55);
     }
 
     public void stopLoadFuel() {
@@ -123,8 +129,13 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void runPivotPID() {
-        setPivotSpeeds(-rightPivotPID.calculate(getNormalizedRightPosition()));
-        // setPivotSpeeds(leftPivotPID.calculate(getNormalizedRightPosition()));
+        // setPivotSpeeds(rightPivotPID.calculate(getNormalizedRightPosition()));
+
+        if (timWantsTheIntakeToMove) {
+            setPivotSpeeds(rightPivotPID.calculate(getNormalizedRightPosition()));
+        } else {
+            setPivotSpeeds(0);
+        }
     }
 
     private void setSetpoint(double setpoint) {
@@ -133,16 +144,16 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void togglePivot() {
-        if (rightPivotPID.getSetpoint() == downPivotPos) {
-            setPivotUp();
-        } else if (rightPivotPID.getSetpoint() == middlePivotPos) {
-            setPivotDown();
-        } else if (rightPivotPID.getSetpoint() == upPivotPos) {
-            setPivotDown();
-        } else {
+        // if (rightPivotPID.getSetpoint() == downPivotPos) {
+        //     setPivotUp();
+        // // } else if (rightPivotPID.getSetpoint() == middlePivotPos) {
+        // //     setPivotDown();
+        // } else if (rightPivotPID.getSetp/oint() == upPivotPos) {
+        //     setPivotDown();
+        // } else {
             // this branch should never execute
             setPivotDown();
-        }
+        // }
     }
 
     public void setPivotDown() {
@@ -153,13 +164,13 @@ public class IntakeSubsystem extends SubsystemBase {
         setSetpoint(upPivotPos);
     }
 
-    public void setPivotMiddle() {
-        setSetpoint(middlePivotPos);
-    }
+    // public void setPivotMiddle() {
+    //     setSetpoint(middlePivotPos);
+    // }
 
-    public void setPivotJiggle() {
-        setSetpoint(jigglePivotPos);
-    }
+    // public void setPivotJiggle() {
+    //     setSetpoint(jigglePivotPos);
+    // }
 
     @Override
     public void periodic() {

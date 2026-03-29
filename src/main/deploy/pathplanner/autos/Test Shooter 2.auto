@@ -7,37 +7,37 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "pathName": "TestPathForwardsSlightly"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "flywheel0.8"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 1.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOn"
+            "name": "shooterLoad"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 10.0
+            "waitTime": 1.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOff"
+            "name": "shooterAllStop"
           }
         }
       ]
