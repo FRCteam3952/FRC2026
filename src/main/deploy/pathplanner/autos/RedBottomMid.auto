@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueTopTrenchToMiddle"
+            "pathName": "RedBottomTrenchToMiddle"
           }
         },
         {
@@ -58,6 +58,12 @@
           "type": "named",
           "data": {
             "name": "shooterOff"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RedMiddleToCenter"
           }
         }
       ]

@@ -100,7 +100,8 @@ public class RobotContainer {
         registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
         registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        registerIfAttached("shooterOn", shooter, shooter -> new InstantCommand(() -> shooter.shooterAutoAim(drivetrain.get().getState().Pose, drivetrain.get().getState().Speeds)));
+        registerIfAttached("shooterOn", shooter, shooter -> new InstantCommand(() -> 
+            shooter.shooterAutoAim(drivetrain.get().getState().Pose, drivetrain.get().getState().Speeds)));
         registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
         registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
         registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
@@ -166,6 +167,7 @@ public class RobotContainer {
             autoChooser.addOption("TopBlueMid", new PathPlannerAuto("TopBlueMid"));
             autoChooser.addOption("BottomBlueMid", new PathPlannerAuto("BottomBlueMid"));
             autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
+            autoChooser.addOption("BottomRedMid", new PathPlannerAuto("BottomRedMid"));
             // autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
         } catch (Exception e) {
             DriverStation.reportError("we're dumb: " + e.getMessage(), e.getStackTrace());
