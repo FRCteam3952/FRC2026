@@ -10,6 +10,7 @@ import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -19,21 +20,22 @@ import frc.robot.Constants.RobotConstants;
 public class IntakeSubsystem extends SubsystemBase {
     // TODO pivot
     // private final SparkMax leftPivot;
-    private final SparkMax rightPivot;
-    private final PIDController rightPivotPID = new PIDController(3.0, 0, 0);
+    private final TalonFX pivotMotor;
+    private final PIDController rightPivotPID = new PIDController(1.25, 0, 0);
     // private final PIDController leftPivotPID = new PIDController(0.5, 0, 0);
 
     private final SparkMax intakeMotor;
 
-    private final AbsoluteEncoder rightAbsoluteEncoder;
+    private final AbsoluteEncoder pivotAbsoluteEncoder;
     // private final RelativeEncoder leftEncoder;
 
-    private final double downPivotPos = 0.080; // is: 0.059
+    private final double downPivotPos = 0.1300; // is: 0.1170
     // private final double jigglePivotPos = 0.3000;  // tune me?
     // private final double middlePivotPos = 0.6000; // tune me?
-    private final double upPivotPos = 0.5780; // 0.6080 max
+    private final double upPivotPos = 0.580; // 0.6000 max
+    private final double pivotRange = upPivotPos - downPivotPos;
 
-    public boolean timWantsTheIntakeToMove = true;
+    public boolean timWantsTheIntakeToMove = false;
 
     // private final double leftEncoderRange = 7.5;
     // private final double rightEncoderRange = upPivotPos - downPivotPos;
@@ -42,78 +44,57 @@ public class IntakeSubsystem extends SubsystemBase {
         timWantsTheIntakeToMove = value;
     }
 
-    public IntakeSubsystem() {
+    public IntakeSubsystem(AbsoluteEncoder intakePivotAbsoluteEncoder) {
         intakeMotor = new SparkMax(Ports.INTAKE_MOTOR_CAN_ID, MotorType.kBrushless);
 
         // leftPivot = new SparkMax(Ports.LEFT_INTAKE_PIVOT_CAN_ID, MotorType.kBrushless);
-        rightPivot = new SparkMax(Ports.RIGHT_INTAKE_PIVOT_CAN_ID, MotorType.kBrushless);
-        rightAbsoluteEncoder = rightPivot.getAbsoluteEncoder();
+        pivotMotor = new TalonFX(Ports.RIGHT_INTAKE_PIVOT_CAN_ID);
+        pivotAbsoluteEncoder = intakePivotAbsoluteEncoder;
         // leftEncoder = leftPivot.getEncoder();
 
-        rightPivotPID.setIntegratorRange(0, 0.10); // not being used
+        // rightPivotPID.setIntegratorRange(0, 0.10); // not being used
         // leftPivotPID.setIntegratorRange(0, 0.10);
         rightPivotPID.setSetpoint(upPivotPos);
         // leftPivotPID.setSetpoint(upPivotPos);
         // zeroLeftEncoder();
     }
 
-    // public void zeroLeftEncoder() {
-    //     double rightPosition = rightAbsoluteEncoder.getPosition();
-    //     double leftPosition = (rightPosition - downPivotPos) / rightEncoderRange * leftEncoderRange;
-    //     leftEncoder.setPosition(leftPosition);
-    // }
-
-    // public double getNormalizedLeftPosition() {
-    //     return leftEncoder.getPosition() / leftEncoderRange * rightEncoderRange + downPivotPos;
-    // }
-
-    // public Command getRunIntakeCommand() {
-    //     Command noninterruptible = Commands.run(this::startLoadFuel, this);
-    //     return noninterruptible;
-    // }
-
-    // public Command getStopIntakeCommand() {
-    //     Command noninterruptible = Commands.run(this::stopLoadFuel, this);
-    //     return noninterruptible;
-    // }
-
-    // public Command getLowerIntakeCommand() {
-    //     Command noninterruptible = Commands.run(this::setPivotDown, this);        
-    //     return noninterruptible;
-    // }
-
-    // public Command getRaiseIntakeCommand() {
-    //     Command noninterruptible = Commands.run(this::setPivotUp, this);
-    //     return noninterruptible;
-    // }
-
     public double getNormalizedRightPosition() {
-        return rightAbsoluteEncoder.getPosition();
+        return pivotAbsoluteEncoder.getPosition();
     }
 
     public void pivotTowardPositive() {
-        this.rightPivot.set(0.2);
+        this.pivotMotor.set(0.2);
     }
     
     public void pivotTowardNegative() {
-        this.rightPivot.set(-0.2);
+        this.pivotMotor.set(-0.2);
     }
     
     public void pivotStop() {
-        this.rightPivot.set(-0.0);
+        this.pivotMotor.set(-0.0);
     }
 
     public void setPivotSpeeds(double speed) {
-        // System.out.println("speed = " + speed);
         if (speed > 0.05) {
-            rightPivot.set(speed + 0.1);
+            // might be same as kP increase
+            double position = getNormalizedRightPosition();
+            double intakeAngleFromHorizontal = (position - downPivotPos) / pivotRange * (Math.PI / 2);
+            double correctionConstant = Math.cos(intakeAngleFromHorizontal);
+            double feedforward = correctionConstant * 0.1;
+            // feedforward = 0.1; // testing
+            pivotMotor.set(speed + feedforward);
         } else {
-            rightPivot.set(speed);
+            pivotMotor.set(speed);
         }
     }
 
     public void startLoadFuel() {
-        intakeMotor.set(0.55);
+        intakeMotor.set(0.7);
+    }
+    
+    public void startSpitFuel() {
+        intakeMotor.set(-0.7);
     }
 
     public void stopLoadFuel() {
@@ -132,7 +113,7 @@ public class IntakeSubsystem extends SubsystemBase {
         // setPivotSpeeds(rightPivotPID.calculate(getNormalizedRightPosition()));
 
         if (timWantsTheIntakeToMove) {
-            setPivotSpeeds(rightPivotPID.calculate(getNormalizedRightPosition()));
+            setPivotSpeeds(-rightPivotPID.calculate(getNormalizedRightPosition()));
         } else {
             setPivotSpeeds(0);
         }
@@ -176,7 +157,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public void periodic() {
         runPivotPID();
         
-        // System.out.println("right =" + getNormalizedRightPosition());
+        //System.out.println("right =" + getNormalizedRightPosition());
         //System.out.println("left = " + getNormalizedLeftPosition());
     }
 }

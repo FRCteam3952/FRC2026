@@ -20,4 +20,8 @@ public class ControlUtils {
         }
         return input;
     }
+
+    public static double smoothJoystick(double rawInput) {
+        return Math.signum(rawInput) * Math.pow(rawInput, 2);
+    }
 }

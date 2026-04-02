@@ -5,39 +5,27 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "BlueMiddleToCenterMiddle"
+            "name": "pivotDown"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "intakeOn"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 1.608
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOff"
+            "name": "intakeOff"
           }
         }
       ]

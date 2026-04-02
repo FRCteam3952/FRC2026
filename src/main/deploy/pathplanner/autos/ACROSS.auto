@@ -5,39 +5,27 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "autoAimAlongPathOn"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "RedBottomTrenchToMiddle"
+            "pathName": "TestAcrossHubUp"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TestAcrossHubDown"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 3.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOff"
+            "name": "autoAimAlongPathOff"
           }
         }
       ]

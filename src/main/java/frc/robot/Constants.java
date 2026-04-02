@@ -12,7 +12,7 @@ public class Constants {
         // normal sparks
         public static final int LOWER_INTAKE_CAN_ID = 7;
         
-        public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 14;
+        public static final int RIGHT_INTAKE_PIVOT_CAN_ID = 24;
 
         public static final int UPPER_INTAKE_CAN_ID = 17; 
         public static final int ROLLER_CAN_ID = 21;
@@ -20,7 +20,7 @@ public class Constants {
 
 
         // talons
-        public static final int HOOD_COVER_CAN_ID = 24;
+        public static final int HOOD_COVER_CAN_ID = 30;
         // public static final int LEFT_INTAKE_PIVOT_CAN_ID = 24;
         public static final int CLIMBER_CAN_ID = 25; // doesnt exist
     }
@@ -32,8 +32,13 @@ public class Constants {
     public static class FieldConstants {
         // TODO: this probably isn't relatively correct
         // next try 0 for y, because that might be the middle
-        public static final Translation2d RED_HUB_CENTER_TRANSLATION = new Translation2d(11.9150, 4.0345);
-        public static final Translation2d BLUE_HUB_CENTER_TRANSLATION = new Translation2d(4.6256, 4.0345);
+        public static final Translation2d RED_HUB_CENTER_TRANSLATION = new Translation2d(11.9150, 3.8345); 
+        public static final Translation2d BLUE_HUB_CENTER_TRANSLATION = new Translation2d(4.6256, 3.8345);  
+
+        public static final Translation2d RED_DEPOT_PASS_TRANSLATION = new Translation2d(16.5130, 0); // 650.12 0
+        public static final Translation2d RED_OUTPOST_PASS_TRANSLATION = new Translation2d(16.5130, 8.0427); // 650.12 316.64
+        public static final Translation2d BLUE_DEPOT_PASS_TRANSLATION = new Translation2d(0, 8.0427); // 0 316.64
+        public static final Translation2d BLUE_OUTPOST_PASS_TRANSLATION = new Translation2d(0, 0); //0 0 
     }
 
     public static class RobotConstants {

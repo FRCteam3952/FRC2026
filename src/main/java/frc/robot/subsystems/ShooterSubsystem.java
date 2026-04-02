@@ -34,12 +34,12 @@ public class ShooterSubsystem extends SubsystemBase {
     private final TalonFX hoodCover;
     private final AbsoluteEncoder hoodCoverAbsoluteEncoder;
     // currently tuning, this is absolute mechanical bottom
-    private final double hoodZeroPosition = 0.1730; //down .05, .78 before
+    private final double hoodZeroPosition = 0.4700; //down .05, .78 before
     //// this value is WRONG:
-    private final double hoodOnePosition = 0.8730; //up .52
-    private final double hoodPositionRange = hoodOnePosition - hoodZeroPosition;
+    private final double hoodOnePosition = 0.2300; //up .52 (over the 1)
+    private final double hoodPositionRange = 1 + hoodOnePosition - hoodZeroPosition;
 
-    private final PIDController hoodPositionController = new PIDController(0.5, 0, 0);
+    private final PIDController hoodPositionController = new PIDController(0.4, 0, 0);
 
     public boolean autoShooterOn = false;
 
@@ -59,6 +59,10 @@ public class ShooterSubsystem extends SubsystemBase {
         // flywheelConfig.voltageCompensation(9.0);
         // flywheel.configure(flywheelConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
         // flywheel2.configure(flywheelConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    }
+
+    public AbsoluteEncoder getIntakePivotAbsoluteEncoder() {
+        return upperIntakeMotor.getAbsoluteEncoder();
     }
 
     public void startLoadFuelFlywheel() {
@@ -125,7 +129,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setFlywheelSpeed(LinearVelocity flywheelVelocity) {
         double fuelSpeed = flywheelVelocity.in(MetersPerSecond);
         double fuelSpeedToMotorOutput = 0.03131625;
-        double flywheelSpeedLossFactor = 4; // previously 1.3
+        double flywheelSpeedLossFactor = 4.0; // previously 1.3
 
         double motorOutput = fuelSpeed * fuelSpeedToMotorOutput * flywheelSpeedLossFactor;
         // System.out.println("motorOutput: " + motorOutput);

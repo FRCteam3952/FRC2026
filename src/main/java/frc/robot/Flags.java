@@ -8,7 +8,8 @@ package frc.robot;
 
 
 public class Flags {
-    public static boolean INTAKE_IS_ATTACHED = true;
+    // Intake uses the shooter TSA motor's absolute encoder so it depends on shooter.
+    public static boolean INTAKE_AND_SHOOTER_IS_ATTACHED = true;
     public static boolean DRIVETRAIN_IS_ATTACHED = true;
     public static boolean SHOOTER_IS_ATTACHED = true;
     public static boolean CLIMBER_IS_ATTACHED = false;

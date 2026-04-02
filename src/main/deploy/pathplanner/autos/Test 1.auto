@@ -7,19 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "SimpleStartingLineToSupply"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Pick balls up"
+            "pathName": "TestPathForwardsSlightly"
           }
         }
       ]
     }
   },
-  "resetOdom": true,
+  "resetOdom": false,
   "folder": null,
   "choreoAuto": false
 }

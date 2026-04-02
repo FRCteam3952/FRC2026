@@ -5,39 +5,46 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "RedTopTrenchtoMiddle"
+            "commands": [
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.7
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "BlueBottomTrenchPointingToCenter"
+                }
+              }
+            ]
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "shooterLoad"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterAutoFlywheelHood"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 8.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOff"
+            "name": "shooterAllStop"
           }
         }
       ]

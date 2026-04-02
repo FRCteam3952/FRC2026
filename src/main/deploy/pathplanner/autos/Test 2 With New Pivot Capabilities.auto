@@ -7,25 +7,37 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "pathName": "TestPathForwardsSlightly"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "pivotDown"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeOn"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 5.0
+            "waitTime": 1.608
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeOff"
           }
         }
       ]
     }
   },
-  "resetOdom": true,
+  "resetOdom": false,
   "folder": null,
   "choreoAuto": false
 }

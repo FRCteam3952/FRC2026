@@ -52,7 +52,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private PIDController yController = new PIDController(4.0, 0.0, 0);
     private PIDController xController = new PIDController(4.0, 0.0, 0);
-    private PIDController yawController = new PIDController(10.0, 0, 0);
+    private PIDController yawController = new PIDController(4.0, 0, 0.2);
 
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier m_simNotifier = null;
@@ -134,7 +134,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void initPID() {
         this.xController.setTolerance(0.05);
         this.yController.setTolerance(0.05);
-        this.yawController.setTolerance(0.03);
+        this.yawController.setTolerance(0.02);
 
         this.yawController.enableContinuousInput(-Math.PI, Math.PI);
     }
@@ -229,10 +229,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         configureAutoBuilder();
     }
 
-    public Command getAutoAimAlongPathCommand() {
-        return Commands.runOnce(() -> { autoAimAlongPath = true; })
-                     .finallyDo(() -> { autoAimAlongPath = false; });
-    }
+    // public Command getAutoAimAlongPathCommand() {
+    //     return Commands.runOnce(() -> { autoAimAlongPath = true; })
+    //                  .finallyDo(() -> { autoAimAlongPath = false; });
+    // }
 
     public double getAutoAimYawSpeed() {
         // SAME AS FollowApriltagCommand
@@ -356,6 +356,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return this.yawController.calculate(currentYaw, targetYaw);
     }
 
+    public boolean atYawSetpoint() {
+        return this.yawController.atSetpoint();
+    }
+
     @Override
     public void periodic() {
         /*
@@ -375,8 +379,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-
-
     }
 
     private void startSimThread() {

@@ -7,37 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueBottomTrenchtoMiddle"
+            "pathName": "BlueTopTrenchPointingToCenter"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stopAndAimCommand"
+            "name": "shooterLoad"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shooterAutoFlywheelHood"
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 8.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "shooterOn"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 10.0
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shooterOff"
+            "name": "shooterAllStop"
           }
         }
       ]

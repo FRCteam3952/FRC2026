@@ -4,7 +4,11 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -12,12 +16,10 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
-import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -33,12 +35,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 // import edu.wpi.first.wpilibj2.command.button.;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.commands.C;
+import frc.robot.commands.ShootCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -48,7 +51,6 @@ import frc.robot.subsystems.ShooterSubsystem;
 //import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.util.ControlUtils;
 import frc.robot.util.KinematicsUtil;
-import frc.robot.util.LimelightHelpers;
 
 public class RobotContainer {
     public static double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -73,52 +75,67 @@ public class RobotContainer {
     public final Optional<ShooterSubsystem> shooter;
     public final Optional<ClimberSubsystem> climber;
     public final Optional<LimelightSubsystem> limelights;
-
+ 
     public final PowerDistribution pdp = new PowerDistribution(1, ModuleType.kRev);
     public SendableChooser<Command> autoChooser;
 
     private boolean shooterOn = false;
+    private double controllerInversionFactor = 1;
 
     public static RobotContainer INSTANCE;
 
     public RobotContainer() {
         RobotContainer.INSTANCE = this;
 
-        intake = initializeIfAttached(Flags.INTAKE_IS_ATTACHED, IntakeSubsystem::new);
         drivetrain = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, TunerConstants::createDrivetrain);
         shooter = initializeIfAttached(Flags.SHOOTER_IS_ATTACHED, ShooterSubsystem::new);
+        intake = initializeIfAttached(Flags.INTAKE_AND_SHOOTER_IS_ATTACHED, () -> new IntakeSubsystem(shooter.get().getIntakePivotAbsoluteEncoder()));
         climber = initializeIfAttached(Flags.CLIMBER_IS_ATTACHED, ClimberSubsystem::new);
         limelights = initializeIfAttached(Flags.DRIVETRAIN_IS_ATTACHED, () -> new LimelightSubsystem(drivetrain.get()));
-        configureNamedCommands();
-
         configureBindings();
+        configureNamedCommands();
         configureAutoChooser();
     }
 
     public void configureNamedCommands() {
-        // NamedCommands.registerCommand("togglePivot", this.intake.togglePivot());
-        // NamedCommands.registerCommand("movePivotDown", 
-        //     initializeCommandIfAttached(intake, intake -> this.intake.togglePivot()));
-        registerIfAttached("setPivotDown", intake, intake -> new InstantCommand(intake::setPivotDown));
-        registerIfAttached("setPivotUp", intake, intake -> new InstantCommand(intake::setPivotUp));
-        registerIfAttached("intakeOn", intake, intake -> new InstantCommand(intake::startLoadFuel));
-        registerIfAttached("intakeOff", intake, intake -> new InstantCommand(intake::stopLoadFuel));
 
-        registerIfAttached("autoAimAlongPath", drivetrain, drivetrain -> drivetrain.getAutoAimAlongPathCommand());
-        registerIfAttached("shooterOn", shooter, shooter -> getStopAndAimShooterCommand(shooter));
-        registerIfAttached("shooterOff", shooter, shooter -> new InstantCommand(shooter::stopFlywheel));
-        registerIfAttached("startLoadFuel", shooter, shooter -> new InstantCommand(shooter::startLoadFuel));
-        registerIfAttached("stopLoadFuel", shooter, shooter -> new InstantCommand(shooter::stopLoadFuel));
-        registerIfAttached("stopAndAimCommand", drivetrain, drivetrain -> getStopAndAimCommand(drivetrain));
+        // registerIfAttached("pivotOn",  intake, i -> C.instantCommand(i, intake-> intake.setTimWantsTheIntakeToMove(true)));
+        // registerIfAttached("pivotOff", intake, i -> C.instantCommand(i, intake-> intake.setTimWantsTheIntakeToMove(false)));
 
-        registerIfAttached("flywheel0.8", shooter, shooter -> new InstantCommand(() -> shooter.setFlywheelSpeed(0.8)));
-        registerIfAttached("shooterLoad", shooter, shooter -> new InstantCommand(() -> shooter.startLoadFuel()));
-        registerIfAttached("shooterAllStop", shooter, shooter -> new InstantCommand(() -> {shooter.stopLoadFuel(); shooter.setFlywheelSpeed(0.8);}));
-        registerIfAttached("printShooter", shooter, shooter -> new InstantCommand(() -> System.out.println("printShooter ran")));
-        registerIfAttached("printShooter1.0", shooter, shooter -> new InstantCommand(() -> {
-            System.out.println("printShooter1.0 ran");
-            shooter.setFlywheelSpeed(0.4);
-        }));
+        // Doesn't need pivotOn
+        registerIfAttached("pivotDown", intake, i -> C.resourceCommand(i, intake -> {
+            // initialize by enabling intake and setting setpoint to down
+            intake.setTimWantsTheIntakeToMove(true);
+            intake.setPivotDown();
+        }, intake -> {
+            // end by disabling intake
+            intake.setTimWantsTheIntakeToMove(false);
+        }, 1.0));
+        
+        registerIfAttached("intakeOn", intake, i -> C.instantCommand(i, intake -> intake.startLoadFuel()));
+        registerIfAttached("intakeOff", intake, i -> C.instantCommand(i, intake -> intake.stopLoadFuel()));
+        
+        registerIfAttached("shoot", shooter, shooter -> new ShootCommand(shooter));
+
+        registerIfAttached("autoAimAlongPathOn",  drivetrain, d -> C.instantCommand(d, drivetrain -> drivetrain.autoAimAlongPath = true ));
+        registerIfAttached("autoAimAlongPathOff", drivetrain, d -> C.instantCommand(d, drivetrain -> drivetrain.autoAimAlongPath = false));
+
+        registerIfAttached("aim", drivetrain, this::getStopAndAimCommand);
+        
+        // these are deprecated:
+        // registerIfAttached("shooterLoad", shooter, s -> C.durationCommand(s, shooter -> shooter.startLoadFuel(), 1.0));
+        // // registerIfAttached("pivotDownDuration", intake, i -> C.durationCommand(i, intake -> intake.setPivotDown(), 1.5));
+        // registerIfAttached("pivotOffDuration", intake, i -> C.durationCommand(i, intake -> intake.setTimWantsTheIntakeToMove(false), 0.05));
+        // registerIfAttached("pivotOnDuration", intake, i -> C.instantCommand(i, intake -> intake.setTimWantsTheIntakeToMove(true)));
+        // registerIfAttached("intakeOnDuration", intake, i -> C.durationCommand(i, intake -> intake.startLoadFuel(), 0.1));
+        // registerIfAttached("intakeOffDuration", intake, i -> C.durationCommand(i, intake -> intake.stopLoadFuel(), 0.1));
+        // // double deprecated:
+        // registerIfAttached("shooterAllStop", shooter, shooter -> new InstantCommand(() -> {shooter.stopLoadFuel(); shooter.setFlywheelSpeed(0.8);}));
+        // registerIfAttached("printShooter", shooter, shooter -> new InstantCommand(() -> System.out.println("printShooter ran")));
+        // registerIfAttached("printShooter1.0", shooter, shooter -> new InstantCommand(() -> {
+        //     System.out.println("printShooter1.0 ran");
+        //     shooter.setFlywheelSpeed(0.4);
+        // }));
     }   
 
     public Pose2d getPose() {
@@ -169,42 +186,55 @@ public class RobotContainer {
             Angle yawAngle = shooterState.getSecond().getFirst();
             
             // Drive teleop, auto aiming robot yaw towards hub
-            double rotationSpeedLimiter = 0.2;
-            double yawSpeed = d.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
-            yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+            double yawSpeed = d.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.plus(Angle.ofBaseUnits(Math.PI, Radians)).in(Radians));
 
             return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
                 .withVelocityY(0)// Drive left with negative X (left) (MaxSpeed)
                 .withRotationalRate(yawSpeed * MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-        }).repeatedly();
+        });
     }
 
     private void configureAutoChooser() {
         autoChooser = AutoBuilder.buildAutoChooser("Test Path");
         try {            
             // autoChooser.addOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
-            autoChooser.addOption("BTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("BTTSBackAndForthTwiceBlue Auto"));
-            // autoChooser.addOption("BTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("BTTSBackAndForthTwiceRed Auto"));
-            // autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
-            autoChooser.addOption("TTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("TTTSBackAndForthTwiceBlue Auto"));
+            // autoChooser.addOption("BTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("BTTSBackAndForthTwiceBlue Auto"));
+            // // autoChooser.addOption("BTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("BTTSBackAndForthTwiceRed Auto"));
+            // // autoChooser.addOption("MovingToClimbArea Auto", new PathPlannerAuto("MovingToClimbArea Auto"));
+            // autoChooser.addOption("TTTSBackAndForthTwiceBlue Auto", new PathPlannerAuto("TTTSBackAndForthTwiceBlue Auto"));
             // autoChooser.addOption("TTTSBackAndForthTwiceRed Auto", new PathPlannerAuto("TTTSBackAndForthTwiceRed Auto"));            
 
-            autoChooser.addOption("BottomBlueMid", new PathPlannerAuto("BottomBlueMid"));
-            autoChooser.addOption("TopBlueMid", new PathPlannerAuto("TopBlueMid"));
-            autoChooser.addOption("CenterBlueMid", new PathPlannerAuto("CenterBlueMid"));
+            // autoChooser.addOption("BottomBlueMid", new PathPlannerAuto("BottomBlueMid"));
+            // autoChooser.addOption("TopBlueMid", new PathPlannerAuto("TopBlueMid"));
+            // autoChooser.addOpt/ion("CenterBlueMid", new PathPlannerAuto("CenterBlueMid"));
+
+            
+            autoChooser.addOption("ALLIANCE blueLeft", new PathPlannerAuto("ALLIANCE blueLeft"));
+            autoChooser.addOption("ALLIANCE blueCenter", new PathPlannerAuto("ALLIANCE blueCenter"));
+            autoChooser.addOption("ALLIANCE blueRight", new PathPlannerAuto("ALLIANCE blueRight"));
+
+            autoChooser.addOption("MATCH1", new PathPlannerAuto("MATCH1"));
+            autoChooser.addOption("MATCH2", new PathPlannerAuto("MATCH2"));
+            autoChooser.addOption("OLD-MATCH2", new PathPlannerAuto("OLD-MATCH2"));
+
+            autoChooser.addOption("Test 1", new PathPlannerAuto("Test 1"));
+            autoChooser.addOption("Test 2: With New Pivot Capabilities!", new PathPlannerAuto("Test 2 With New Pivot Capabilities"));
+            autoChooser.addOption("Test Pivot", new PathPlannerAuto("Test Pivot"));
+
 
             // autoChooser.addOption("BottomRedMid", new PathPlannerAuto("BottomRedMid"));
             // autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
             // autoChooser.addOption("CenterRedMid", new PathPlannerAuto("CenterRedMid"));
 
-            autoChooser.addOption("CenterBlueRace", new PathPlannerAuto("CenterRedMid"));
+            // autoChooser.addOption("CenterBlueRace", new PathPlannerAuto("CenterBlueRace"));
+            // autoChooser.addOption("SHOOT", new PathPlannerAuto("SHOOT"));
 
 
-            autoChooser.addOption("VedanthBlueLeft", new PathPlannerAuto("VedanthBlueLeft"));
+            // autoChooser.addOption("VedanthBlueLeft", new PathPlannerAuto("VedanthBlueLeft"));
 
-            // autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
-            autoChooser.addOption("Shooter Test", new PathPlannerAuto("Shooter Test"));
-            autoChooser.addOption("NothingAuto", new PathPlannerAuto("NothingAuto"));
+            // // autoChooser.addOption("TopRedMid", new PathPlannerAuto("TopRedMid"));
+            // autoChooser.addOption("Shooter Test", new PathPlannerAuto("Shooter Test"));
+            // autoChooser.addOption("NothingAuto", new PathPlannerAuto("NothingAuto"));
 
 
             // autoChooser.setDefaultOption("FRC Auto", new PathPlannerAuto("FRC Auto"));
@@ -220,55 +250,61 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention
         pdp.setSwitchableChannel(true);
 
+        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Blue) {
+            controllerInversionFactor *= -1; // TEST ME!
+        }
+
+
             
         drivetrain.ifPresent(drivetrain -> {                                                                                                                                                                                                                                                                                              
             drivetrain.initPID();         
             
-            joystick.PS().onTrue(new InstantCommand(() -> {
-                // drivetrain.seedFieldCentric(); // not necessary?
-                // if (
-                //  {
-                    drivetrain.getPigeon2().setYaw(180);
-                // }
+            drivetrain.seedFieldCentric();
+            // drivetrain.getPigeon2().setYaw(0);
+
+            joystick.options().onTrue(new InstantCommand(() -> {
+                controllerInversionFactor *= -1;
             }));
-                                                  
+
+            joystick.PS().onTrue(new InstantCommand(() -> {
+                drivetrain.seedFieldCentric();
+                // drivetrain.getPigeon2().setYaw(0);
+            }));
+
             teleopDriveCommand = drivetrain.applyRequest(() -> {
-                return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-                            .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
+                return drive.withVelocityX(controllerInversionFactor * ControlUtils.smoothJoystick(joystick.getLeftY()) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                            .withVelocityY(controllerInversionFactor * ControlUtils.smoothJoystick(joystick.getLeftX()) * MaxSpeed) // Drive left with negative X (left) (MaxSpeed)
                             .withRotationalRate(-joystick.getRightX()*MaxAngularRate) // Drive counterclockwise with negative X (left)
                             .withDeadband(0.1);
             });
 
             followApriltagCommand = drivetrain.applyRequest(() -> {
-                System.out.println("\n\n\nfollow apriltag command");
+                // System.out.println("\n\n\nfollow apriltag command");
                 Pose2d botPose = drivetrain.getState().Pose;
                 ChassisSpeeds currentSpeed = drivetrain.getState().Speeds;
                 
                 // System.out.println("Follow Apriltag Command");
                 var shooterState = KinematicsUtil.getShooterState(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+                if (botPose.getX() > 4.6256 && botPose.getX() < 11.9154) { // 182.11 143.5
+                    shooterState = KinematicsUtil.getShooterStateForPass(botPose.getX(), botPose.getY(), currentSpeed.vxMetersPerSecond, currentSpeed.vyMetersPerSecond);
+                }
                 LinearVelocity flywheelVelocty = shooterState.getFirst();
                 Angle yawAngle = shooterState.getSecond().getFirst();
                 Angle hoodAngle = shooterState.getSecond().getSecond();
                 
                 shooter.ifPresent(shooter -> {
                     // Auto aim shooter
+                    // System.out.println("hood setpoint = " + hoodAngle);
                     shooter.setHoodSetpoint(hoodAngle);
-                    if (shooterOn) {
-                        shooter.setFlywheelSpeed(flywheelVelocty);
-                    } else {
-                        shooter.setFlywheelSpeed(0);
-                    }
+                    // System.out.println(drivetrain.atYawSetpoint());
+                    shooter.setFlywheelSpeed(flywheelVelocty);
                 });
-
-                System.out.println("------------ (degrees) Yaw should be: " + yawAngle.in(Degrees));
-                
                 // Drive teleop, auto aiming robot yaw towards hub
-                double rotationSpeedLimiter = 0.2;
                 double yawSpeed = drivetrain.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.in(Radians));
-                yawSpeed = ControlUtils.clamp(yawSpeed) * rotationSpeedLimiter; // probably change how this works later
+                yawSpeed = ControlUtils.clamp(-0.9, yawSpeed, 0.9);
 
-                return drive.withVelocityX(Math.pow(joystick.getLeftY(), 3) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
-                    .withVelocityY(Math.pow(joystick.getLeftX(), 3) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
+                return drive.withVelocityX(controllerInversionFactor * ControlUtils.smoothJoystick(joystick.getLeftY()) * MaxSpeed) // Drive forward with negative Y (forward) (MaxSpeed)
+                    .withVelocityY(controllerInversionFactor * ControlUtils.smoothJoystick(joystick.getLeftX()) * MaxSpeed)// Drive left with negative X (left) (MaxSpeed)
                     .withRotationalRate(yawSpeed * MaxAngularRate)//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
                     .withDeadband(0.1);
             });
@@ -298,9 +334,11 @@ public class RobotContainer {
 
         shooter.ifPresent(shooter -> {
             joystick.triangle().onTrue(new InstantCommand(() -> shooter.setHoodSetpoint(1.0)));
-            joystick.triangle().onFalse(new InstantCommand(shooter::stopFuelHood));
-            joystick.cross().onTrue(new InstantCommand(() -> shooter.setHoodSetpoint(0.0)));
-            joystick.cross().onFalse(new InstantCommand(shooter::stopFuelHood));
+            joystick.circle().onTrue(new InstantCommand(() -> shooter.setHoodSetpoint(0.0)));
+            // joystick.triangle().onTrue(new InstantCommand(() -> intake.pivotTowardPositive()));
+            // joystick.triangle().onFalse(new InstantCommand(intake::pivotStop));
+            // joystick.cross().onTrue(new InstantCommand(() -> intake.pivotTowardNegative()));
+            // joystick.cross().onFalse(new InstantCommand(intake::pivotStop));
 
             // cross to disable auto aim,
             // if (joystick.R1().getAsBoolean() == false) {
@@ -318,25 +356,31 @@ public class RobotContainer {
                 })
                 .andThen(new WaitCommand(0.5))
                 .andThen(new InstantCommand(() -> {
-                    if (joystick.R2().getAsBoolean() == true) {
+                    if (joystick.R2().getAsBoolean() == true && joystick.R1().getAsBoolean()) {
                         shooter.startLoadFuel();
                     }
-                }))
+                }).repeatedly().onlyWhile(() -> joystick.R2().getAsBoolean()))
             );
             joystick.R2().onFalse(new InstantCommand(() -> {
                 shooterOn = false;
                 shooter.stopLoadFuel();
             }));
+
+            joystick.R2().whileTrue(
+                new WaitUntilCommand(() -> drivetrain.get().atYawSetpoint())
+                .andThen(new WaitCommand(0.5))
+                .andThen(new InstantCommand(shooter::startLoadFuel))
+            );
         });
         
         intake.ifPresent(intake -> {
             // L1 to toggle the pivot up and down
             // Note: now only toggles it to down, doesn't go up
-            joystick.L1().onTrue(
-                new InstantCommand(intake::togglePivot)
-                .andThen(new WaitCommand(2.5))
-                .andThen(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(false)))
-            );
+            joystick.L1().onTrue(new InstantCommand(intake::togglePivot));
+
+            joystick.circle().onTrue(new InstantCommand(intake::setPivotUp));
+
+            // joystick.circle().whileTrue(intake::set)
 
             // joystick.povUp().onTrue(new InstantCommand(intake::pivotTowardPositive));
             // joystick.povDown().onTrue(new InstantCommand(intake::pivotTowardNegative));
@@ -351,9 +395,11 @@ public class RobotContainer {
             // hold L2 to intake/not take fuel
             joystick.L2().onTrue(new InstantCommand(intake::startLoadFuel));
             joystick.L2().onFalse(new InstantCommand(intake::stopLoadFuel));
+            joystick.triangle().onTrue(new InstantCommand(intake::startSpitFuel));
+            joystick.triangle().onFalse(new InstantCommand(intake::stopLoadFuel));
         
-            // joystick.square().onTrue(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(true)));
-            // joystick.square().onFalse(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(false)));
+            joystick.square().onTrue(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(true)));
+            joystick.square().onFalse(new InstantCommand(() -> intake.setTimWantsTheIntakeToMove(false)));
 
             // // jiggle that thing while shooting (r2)
             // joystick.R2().whileTrue(new WaitCommand(1)
@@ -392,6 +438,7 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand() {
+        // drivetrain.get().seedFieldCentric();
         return autoChooser.getSelected();
         // return null;
 
