@@ -3,8 +3,8 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5199784482758627,
-        "y": 0.46759698275862094
+        "x": 3.552209821428571,
+        "y": 0.680997023809524
       },
       "prevControl": null,
       "nextControl": {
@@ -12,7 +12,7 @@
         "y": 1.327683189655172
       },
       "isLocked": false,
-      "linkedName": "BlueBottomCornerStart"
+      "linkedName": null
     },
     {
       "anchor": {
@@ -25,7 +25,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "temp2"
     }
   ],
   "rotationTargets": [],
