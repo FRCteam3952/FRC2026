@@ -21,7 +21,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // TODO pivot
     // private final SparkMax leftPivot;
     private final TalonFX pivotMotor;
-    private final PIDController rightPivotPID = new PIDController(1.25, 0, 0);
+    private final PIDController rightPivotPID = new PIDController(1.5, 0, 0);
     // private final PIDController leftPivotPID = new PIDController(0.5, 0, 0);
 
     private final SparkMax intakeMotor;
@@ -90,7 +90,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void startLoadFuel() {
-        intakeMotor.set(0.7);
+        intakeMotor.set(0.9);
     }
     
     public void startSpitFuel() {

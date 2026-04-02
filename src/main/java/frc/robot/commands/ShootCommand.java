@@ -33,6 +33,7 @@ public class ShootCommand extends Command {
 
     @Override
     public void execute() {
+        System.out.println("SHOOT COMMAND EXECUTING");
         Pose2d botPose = RobotContainer.INSTANCE.getBotPose();
         ChassisSpeeds currentSpeed = RobotContainer.INSTANCE.getSpeeds();
         
@@ -48,6 +49,7 @@ public class ShootCommand extends Command {
             shooterLoading = true;
             shooter.startLoadFuel();
         }
+        System.out.println("SHOOT COMMAND DONE AND EXECUTED");
     }
 
     @Override

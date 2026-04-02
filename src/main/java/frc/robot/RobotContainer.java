@@ -178,6 +178,7 @@ public class RobotContainer {
 
     public Command getStopAndAimCommand(CommandSwerveDrivetrain d) {
         return d.applyRequest(() -> {
+            System.out.println("STOP AND AIM COMMAND EXECUTING");
             Pose2d botPose = d.getState().Pose;
             ChassisSpeeds currentSpeed = d.getState().Speeds;
             
@@ -188,6 +189,7 @@ public class RobotContainer {
             // Drive teleop, auto aiming robot yaw towards hub
             double yawSpeed = d.calculateYawSpeed(botPose.getRotation().getRadians(), yawAngle.plus(Angle.ofBaseUnits(Math.PI, Radians)).in(Radians));
 
+            System.out.println("STOP AND AIM COMMAND DONE SOON");
             return drive.withVelocityX(0) // Drive forward with negative Y (forward) (MaxSpeed)
                 .withVelocityY(0)// Drive left with negative X (left) (MaxSpeed)
                 .withRotationalRate(yawSpeed * MaxAngularRate);//-joystick.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
